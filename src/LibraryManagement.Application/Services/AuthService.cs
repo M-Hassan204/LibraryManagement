@@ -6,6 +6,7 @@ using LibraryManagement.Domain.Entities;
 using LibraryManagement.Shared.Exceptions;
 using LibraryManagement.Shared.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace LibraryManagement.Application.Services;
 
@@ -15,17 +16,20 @@ public class AuthService : IAuthService
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         IJwtTokenGenerator jwtTokenGenerator,
         IUnitOfWork unitOfWork,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<AuthService> logger)
     {
         _userManager = userManager;
         _jwtTokenGenerator = jwtTokenGenerator;
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<ApiResponse<AuthResponseDto>> RegisterAsync(RegisterRequestDto request)
@@ -67,11 +71,20 @@ public class AuthService : IAuthService
         await _unitOfWork.EmailVerificationTokens.AddAsync(verificationToken);
         await _unitOfWork.SaveChangesAsync();
 
-        // Send email
-        // In a real app, this would be a link to the frontend
+        // Send email with try/catch
         var subject = "Verify your email address";
         var body = $"<p>Your email verification token is: <strong>{token}</strong></p>";
-        await _emailService.SendEmailAsync(user.Email, subject, body);
+        var message = "Registration successful. Please check your email to verify your account.";
+        
+        try
+        {
+            await _emailService.SendEmailAsync(user.Email, subject, body);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send verification email to {Email} during registration.", user.Email);
+            message = "Registration successful, but we encountered an issue sending the verification email. Please try logging in and requesting a new verification link later.";
+        }
 
         // Do not generate JWT for unverified users
         return ApiResponse<AuthResponseDto>.SuccessResponse(new AuthResponseDto
@@ -80,7 +93,7 @@ public class AuthService : IAuthService
             FirstName = user.FirstName,
             LastName = user.LastName,
             Roles = new List<string> { AppRoles.Student }
-        }, "Registration successful. Please check your email to verify your account.");
+        }, message);
     }
 
     public async Task<ApiResponse<AuthResponseDto>> LoginAsync(LoginRequestDto request)
@@ -216,7 +229,16 @@ public class AuthService : IAuthService
 
         var subject = "Verify your email address";
         var body = $"<p>Your new email verification token is: <strong>{token}</strong></p>";
-        await _emailService.SendEmailAsync(user.Email!, subject, body);
+        
+        try
+        {
+            await _emailService.SendEmailAsync(user.Email!, subject, body);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to resend verification email to {Email}.", user.Email);
+            return ApiResponse<bool>.FailureResponse("Could not send the verification email due to a server error. Please try again later.");
+        }
 
         return ApiResponse<bool>.SuccessResponse(true, "Verification email sent successfully.");
     }

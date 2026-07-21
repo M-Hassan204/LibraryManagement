@@ -5,6 +5,7 @@ using LibraryManagement.Domain.Entities;
 using LibraryManagement.Shared.Exceptions;
 using LibraryManagement.Shared.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace LibraryManagement.Application.Services;
 
@@ -13,12 +14,14 @@ public class OtpService : IOtpService
     private readonly IUnitOfWork _unitOfWork;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailService _emailService;
+    private readonly ILogger<OtpService> _logger;
 
-    public OtpService(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager, IEmailService emailService)
+    public OtpService(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager, IEmailService emailService, ILogger<OtpService> logger)
     {
         _unitOfWork = unitOfWork;
         _userManager = userManager;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<ApiResponse<bool>> SendOtpAsync(SendOtpRequestDto request)
@@ -55,7 +58,16 @@ public class OtpService : IOtpService
         // Send email
         var subject = $"Your OTP for {request.Purpose}";
         var body = $"<p>Your One-Time Password (OTP) is: <strong>{code}</strong></p><p>This code will expire in 10 minutes.</p>";
-        await _emailService.SendEmailAsync(user.Email!, subject, body);
+        
+        try
+        {
+            await _emailService.SendEmailAsync(user.Email!, subject, body);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send OTP email to {Email} for {Purpose}.", user.Email, request.Purpose);
+            return ApiResponse<bool>.FailureResponse("Could not send the OTP email due to a server error. Please try again later.");
+        }
 
         return ApiResponse<bool>.SuccessResponse(true, "OTP sent successfully.");
     }
