@@ -16,9 +16,9 @@
 
 ## GitHub
 
-- [ ] Create README
+- [x] Create README
 - [ ] Add License
-- [ ] Verify .gitignore
+- [x] Verify .gitignore
 - [ ] Remove Secrets
 - [ ] Remove bin/
 - [ ] Remove obj/
