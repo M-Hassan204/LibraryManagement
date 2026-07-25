@@ -7,7 +7,7 @@ Library Management System
 Current Status:
 
 🟢 Backend Completed
-🟡 Frontend Not Started
+🟡 Frontend In Progress
 ⚪ Deployment Not Started
 
 ---
@@ -79,13 +79,19 @@ Backend
 
 Frontend
 
-Not started
+- React 19
+- TypeScript
+- Vite
+- React Router
+- Material UI
+- TanStack Query
+- Axios
 
 ---
 
 ## Next Step
 
-Frontend Architecture Design
+Frontend Features Implementation (Books, Categories, Authors, etc.)
 
 ---
 

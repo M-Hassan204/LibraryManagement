@@ -28,15 +28,15 @@
 
 ## Frontend
 
-- [ ] Design Architecture
-- [ ] Create React Project
-- [ ] Configure TypeScript
-- [ ] Configure Routing
-- [ ] Configure Axios
-- [ ] Configure TanStack Query
-- [ ] Configure Authentication
-- [ ] Login Page
-- [ ] Dashboard
+- [x] Design Architecture
+- [x] Create React Project
+- [x] Configure TypeScript
+- [x] Configure Routing
+- [x] Configure Axios
+- [x] Configure TanStack Query
+- [x] Configure Authentication
+- [x] Login Page
+- [x] Dashboard
 - [ ] Books
 - [ ] Categories
 - [ ] Authors

@@ -98,7 +98,7 @@ Tasks
 
 Frontend
 
-⬜ Pending
+🟡 In Progress
 
 Recommended
 
