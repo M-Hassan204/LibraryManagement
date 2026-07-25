@@ -1,0 +1,51 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { borrowingsApi } from '@/api/borrowings.api';
+import type { ResourceParameters } from '@/types/api.types';
+import type { ReturnBookRequestDto, BorrowBookRequestDto } from '@/types/borrowing.types';
+
+export const ALL_BORROWINGS_QUERY_KEY = 'allBorrowings';
+
+export function useAllBorrowings(params: ResourceParameters) {
+  return useQuery({
+    queryKey: [ALL_BORROWINGS_QUERY_KEY, params],
+    queryFn: async () => {
+      const response = await borrowingsApi.getAll(params);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch borrowings');
+      }
+      return response.data;
+    },
+  });
+}
+
+export function useReturnBook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: ReturnBookRequestDto }) => {
+      const response = await borrowingsApi.returnBook(id, data);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to return book');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ALL_BORROWINGS_QUERY_KEY] });
+    },
+  });
+}
+
+export function useBorrowBook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: BorrowBookRequestDto) => {
+      const response = await borrowingsApi.borrowBook(data);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to borrow book');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ALL_BORROWINGS_QUERY_KEY] });
+    },
+  });
+}

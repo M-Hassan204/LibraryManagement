@@ -32,6 +32,7 @@ const CategoriesPage = lazy(() => import('@/features/categories/pages/Categories
 const CreateCategoryPage = lazy(() => import('@/features/categories/pages/CreateCategoryPage'));
 const EditCategoryPage = lazy(() => import('@/features/categories/pages/EditCategoryPage'));
 const AllBorrowingsPage = lazy(() => import('@/features/borrowings/pages/AllBorrowingsPage'));
+const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'));
 
 // Authenticated (any role) pages
 const MyBorrowingsPage = lazy(() => import('@/features/borrowings/pages/MyBorrowingsPage'));
@@ -244,6 +245,16 @@ export const router = createBrowserRouter([
           <AdminRoute>
             <Suspense fallback={<PageLoader />}>
               <AllBorrowingsPage />
+            </Suspense>
+          </AdminRoute>
+        ),
+      },
+      {
+        path: ROUTES.USERS,
+        element: (
+          <AdminRoute>
+            <Suspense fallback={<PageLoader />}>
+              <UsersPage />
             </Suspense>
           </AdminRoute>
         ),

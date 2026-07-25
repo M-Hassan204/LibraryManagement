@@ -37,6 +37,9 @@ export const ROUTES = {
   // Admin — Borrowings
   BORROWINGS: '/app/borrowings',
 
+  // Admin — Users
+  USERS: '/app/users',
+
   // Student
   MY_BORROWINGS: '/app/my-borrowings',
 
