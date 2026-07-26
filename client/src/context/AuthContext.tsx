@@ -22,6 +22,7 @@ interface AuthContextValue {
   isInitializing: boolean;
   login: (data: AuthResponseDto) => void;
   logout: () => void;
+  updateUser: (user: Partial<AuthenticatedUser>) => void;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -85,6 +86,11 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
     setUser(null);
   }, []);
 
+  // ── UpdateUser: updates local user state ──────────────────────────────────
+  const updateUser = useCallback((partialUser: Partial<AuthenticatedUser>): void => {
+    setUser((prev) => (prev ? { ...prev, ...partialUser } : null));
+  }, []);
+
   const isAuthenticated = user !== null;
   const isAdmin = user?.roles.includes(APP_ROLES.Admin) ?? false;
 
@@ -96,8 +102,9 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
       isInitializing,
       login,
       logout,
+      updateUser,
     }),
-    [user, isAuthenticated, isAdmin, isInitializing, login, logout],
+    [user, isAuthenticated, isAdmin, isInitializing, login, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -121,6 +128,7 @@ function mapToAuthenticatedUser(data: AuthResponseDto): AuthenticatedUser {
     firstName: data.firstName,
     lastName: data.lastName,
     fullName: `${data.firstName} ${data.lastName}`.trim(),
+    profileImageUrl: data.profileImageUrl,
     roles: data.roles,
   };
 }

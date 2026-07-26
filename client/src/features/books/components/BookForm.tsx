@@ -9,6 +9,9 @@ import { useAuthors } from '@/features/authors/hooks/useAuthors';
 import { useCategories } from '@/features/categories/hooks/useCategories';
 import { BookStatus } from '@/types/book.types';
 import { LoadingButton } from '@/components/common/LoadingButton';
+import { BookSearchDialog, type ImportedBookData } from './BookSearchDialog';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const bookSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -18,6 +21,7 @@ const bookSchema = z.object({
   categoryId: z.coerce.number().int().positive('Category is required'),
   authorId: z.coerce.number().int().positive('Author is required'),
   status: z.nativeEnum(BookStatus).optional(),
+  coverImageUrl: z.string().optional(),
 });
 
 type BookFormValues = z.infer<typeof bookSchema>;
@@ -34,7 +38,7 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
   const { data: categories } = useCategories();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const { control, handleSubmit } = useForm<BookFormValues>({
+  const { control, handleSubmit, setValue } = useForm<BookFormValues>({
     resolver: zodResolver(bookSchema) as any,
     defaultValues: {
       title: initialValues?.title || '',
@@ -44,14 +48,59 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
       categoryId: initialValues?.categoryId || 0,
       authorId: initialValues?.authorId || 0,
       status: initialValues?.status || BookStatus.Available,
+      coverImageUrl: initialValues?.coverImageUrl || '',
     },
   });
 
-  // Removed handleSubmit destructure
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [previewCoverUrl, setPreviewCoverUrl] = useState<string | null>(initialValues?.coverImageUrl || null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setSelectedFile(event.target.files[0]);
+      setPreviewCoverUrl(URL.createObjectURL(event.target.files[0]));
+      setValue('coverImageUrl', '', { shouldValidate: true });
+    }
+  };
+
+  const handleImport = (bookData: ImportedBookData) => {
+    setValue('title', bookData.title, { shouldValidate: true });
+    setValue('isbn', bookData.isbn13 || bookData.isbn10 || '', { shouldValidate: true });
+    
+    if (bookData.publishedDate) {
+      const year = parseInt(bookData.publishedDate.substring(0, 4));
+      if (!isNaN(year)) {
+        setValue('publishedYear', year, { shouldValidate: true });
+      }
+    }
+
+    if (bookData.coverImageUrl) {
+      setValue('coverImageUrl', bookData.coverImageUrl, { shouldValidate: true });
+      setPreviewCoverUrl(bookData.coverImageUrl);
+      setSelectedFile(null);
+    }
+
+    let descLines = [];
+    if (bookData.subtitle) descLines.push(`Subtitle: ${bookData.subtitle}`);
+    if (bookData.publisher) descLines.push(`Publisher: ${bookData.publisher}`);
+    if (bookData.pageCount) descLines.push(`Pages: ${bookData.pageCount}`);
+    if (bookData.language) descLines.push(`Language: ${bookData.language}`);
+    if (bookData.categories && bookData.categories.length > 0) descLines.push(`External Categories: ${bookData.categories.join(', ')}`);
+    if (descLines.length > 0) descLines.push('');
+    if (bookData.description) descLines.push(bookData.description);
+    
+    setValue('description', descLines.join('\n').trim(), { shouldValidate: true });
+
+    if (bookData.authors && bookData.authors.length > 0 && authors) {
+      const mainAuthor = bookData.authors[0].toLowerCase();
+      const matched = authors.find(a => a.name.toLowerCase().includes(mainAuthor) || mainAuthor.includes(a.name.toLowerCase()));
+      if (matched) setValue('authorId', matched.id, { shouldValidate: true });
+    }
+
+    if (bookData.categories && bookData.categories.length > 0 && categories) {
+      const mainCat = bookData.categories[0].toLowerCase();
+      const matched = categories.find(c => c.name.toLowerCase().includes(mainCat) || mainCat.includes(c.name.toLowerCase()));
+      if (matched) setValue('categoryId', matched.id, { shouldValidate: true });
     }
   };
 
@@ -62,6 +111,15 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
   return (
     <Card sx={{ p: 4 }}>
       <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            startIcon={<CloudDownloadIcon />}
+            onClick={() => setImportDialogOpen(true)}
+          >
+            Import From Internet
+          </Button>
+        </Box>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 6 }}>
             <FormTextField name="title" control={control} label="Title" required />
@@ -128,6 +186,16 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
             <Typography variant="subtitle2" gutterBottom>
               Cover Image (Optional)
             </Typography>
+            {previewCoverUrl && (
+              <Box sx={{ mb: 2 }}>
+                <Box
+                  component="img"
+                  src={getImageUrl(previewCoverUrl)}
+                  alt="Cover Preview"
+                  style={{ maxHeight: 200, borderRadius: 4, objectFit: 'contain' }}
+                />
+              </Box>
+            )}
             <input
               accept="image/jpeg, image/png, image/gif"
               style={{ display: 'none' }}
@@ -154,6 +222,12 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
           </LoadingButton>
         </Box>
       </Box>
+
+      <BookSearchDialog
+        open={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onImport={handleImport}
+      />
     </Card>
   );
 }

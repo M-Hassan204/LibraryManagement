@@ -41,6 +41,7 @@ const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'));
 // Authenticated (any role) pages
 const MyBorrowingsPage = lazy(() => import('@/features/borrowings/pages/MyBorrowingsPage'));
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'));
+const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
 
 // Error pages
 const UnauthorizedPage = lazy(() => import('@/features/errors/UnauthorizedPage'));
@@ -318,6 +319,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <ProfilePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.SETTINGS,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SettingsPage />
           </Suspense>
         ),
       },

@@ -6,6 +6,7 @@ export interface AuthResponseDto {
   email: string;
   firstName: string;
   lastName: string;
+  profileImageUrl?: string;
   roles: string[];
   requiresTwoFactor: boolean;
 }
@@ -54,5 +55,6 @@ export interface AuthenticatedUser {
   firstName: string;
   lastName: string;
   fullName: string;
+  profileImageUrl?: string;
   roles: string[];
 }

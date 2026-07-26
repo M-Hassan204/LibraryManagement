@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
 import { useBooks } from '../../books/hooks/useBooks';
+import { getImageUrl } from '@/utils/imageUrl';
 
 export default function HomePage(): React.ReactElement {
   const theme = useTheme();
@@ -144,7 +145,7 @@ export default function HomePage(): React.ReactElement {
                   {book.coverImageUrl ? (
                     <Box
                       component="img"
-                      src={book.coverImageUrl}
+                      src={getImageUrl(book.coverImageUrl)}
                       alt={book.title}
                       sx={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover' }}
                     />

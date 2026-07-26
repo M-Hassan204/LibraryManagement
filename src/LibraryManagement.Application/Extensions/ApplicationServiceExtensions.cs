@@ -31,6 +31,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IAuthorService, LibraryManagement.Application.Services.AuthorService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IBookService, LibraryManagement.Application.Services.BookService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IUserService, LibraryManagement.Application.Services.UserService>();
+        services.AddScoped<LibraryManagement.Application.Interfaces.Services.IAdminUserService, LibraryManagement.Application.Services.AdminUserService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IBorrowingService, LibraryManagement.Application.Services.BorrowingService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IImageService, LibraryManagement.Application.Services.ImageService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IDashboardService, LibraryManagement.Application.Services.DashboardService>();

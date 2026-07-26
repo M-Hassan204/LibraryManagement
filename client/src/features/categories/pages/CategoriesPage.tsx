@@ -61,7 +61,7 @@ export default function CategoriesPage(): React.ReactElement {
 
   return (
     <Box>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
           Categories Management
         </Typography>

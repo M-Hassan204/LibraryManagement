@@ -46,6 +46,7 @@ export interface CreateBookRequestDto {
   title: string;
   isbn: string;
   description?: string;
+  coverImageUrl?: string;
   publishedYear: number;
   categoryId: number;
   authorId: number;
@@ -57,6 +58,7 @@ export interface UpdateBookRequestDto {
   title: string;
   isbn: string;
   description?: string;
+  coverImageUrl?: string;
   publishedYear: number;
   status: BookStatus;
   categoryId: number;

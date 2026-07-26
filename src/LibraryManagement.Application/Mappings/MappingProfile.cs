@@ -27,5 +27,10 @@ public class MappingProfile : Profile
         CreateMap<Domain.Entities.Book, DTOs.Book.BookDto>().ReverseMap();
         CreateMap<DTOs.Book.CreateBookRequestDto, Domain.Entities.Book>();
         CreateMap<DTOs.Book.UpdateBookRequestDto, Domain.Entities.Book>();
+
+        // Admin User Mappings
+        CreateMap<Domain.Entities.ApplicationUser, DTOs.Admin.Users.AdminUserDto>()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => !src.IsDeleted))
+            .ForMember(dest => dest.RegistrationDate, opt => opt.MapFrom(src => src.CreatedAt));
     }
 }

@@ -11,6 +11,7 @@
 - [ ] Review AutoMapper
 - [ ] Review FluentValidation
 - [ ] Review Repository Pattern
+- [x] Implement Users Management Endpoints (Admin)
 
 ---
 
@@ -37,11 +38,11 @@
 - [x] Configure Authentication
 - [x] Login Page
 - [x] Dashboard
-- [ ] Books
-- [ ] Categories
-- [ ] Authors
-- [ ] Borrowings
-- [ ] Users
+- [x] Books
+- [x] Categories
+- [x] Authors
+- [x] Borrowings
+- [x] Users
 
 ---
 

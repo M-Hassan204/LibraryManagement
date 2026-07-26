@@ -27,6 +27,7 @@ import { BookStatus } from '@/types/book.types';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { getImageUrl } from '@/utils/imageUrl';
 
 export default function BookDetailPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
@@ -139,7 +140,7 @@ export default function BookDetailPage(): React.ReactElement {
             {book.coverImageUrl ? (
               <Box
                 component="img"
-                src={book.coverImageUrl}
+                src={getImageUrl(book.coverImageUrl)}
                 alt={book.title}
                 sx={{
                   width: '100%',

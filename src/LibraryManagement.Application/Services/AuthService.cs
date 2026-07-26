@@ -268,6 +268,7 @@ public class AuthService : IAuthService
             Email = user.Email!,
             FirstName = user.FirstName,
             LastName = user.LastName,
+            ProfileImageUrl = user.ProfileImageUrl,
             Roles = roles,
             RequiresTwoFactor = false
         };

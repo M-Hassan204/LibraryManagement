@@ -50,4 +50,9 @@ export const dashboardKeys = {
 export const userKeys = {
   all: ['users'] as const,
   profile: () => [...userKeys.all, 'me'] as const,
+  adminAll: () => [...userKeys.all, 'admin'] as const,
+  adminLists: () => [...userKeys.adminAll(), 'list'] as const,
+  adminList: (params: ResourceParameters) => [...userKeys.adminLists(), params] as const,
+  adminDetails: () => [...userKeys.adminAll(), 'detail'] as const,
+  adminDetail: (id: string) => [...userKeys.adminDetails(), id] as const,
 };

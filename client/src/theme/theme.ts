@@ -11,11 +11,17 @@ import { typography } from './typography';
 // - Dark mode is the default — it suits a professional library dashboard
 //   and is increasingly the expectation in modern SaaS tools.
 // - All color references use our palette tokens, never raw hex values.
-// - Component overrides are defined here so individual components
-//   never need ad-hoc styling for global concerns.
-
 export const createAppTheme = (mode: PaletteMode) =>
   createTheme({
+    breakpoints: {
+      values: {
+        xs: 0,
+        sm: 768,
+        md: 1024,
+        lg: 1200,
+        xl: 1440,
+      },
+    },
     palette: {
       mode,
       primary: palette.primary,

@@ -160,6 +160,8 @@ try
     });
 
     app.UseHttpsRedirection();
+    
+    app.UseStaticFiles();
 
     app.UseCors("AllowAll");
 

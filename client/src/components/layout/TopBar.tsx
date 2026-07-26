@@ -13,12 +13,18 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
+import MenuIcon from '@mui/icons-material/Menu';
+import { getImageUrl } from '@/utils/imageUrl';
+
+interface TopBarProps {
+  handleDrawerToggle?: () => void;
+}
 
 /**
  * TopBar provides the global top navigation for authenticated users.
  * Includes page title, breadcrumbs, notifications, and user profile menu.
  */
-export default function TopBar(): React.ReactElement {
+export default function TopBar({ handleDrawerToggle }: TopBarProps): React.ReactElement {
   const theme = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -49,7 +55,23 @@ export default function TopBar(): React.ReactElement {
         zIndex: theme.zIndex.drawer + 1,
       }}
     >
-      <Toolbar sx={{ justifyContent: 'flex-end', minHeight: '48px !important', py: 0 }}>
+      <Toolbar sx={{ justifyContent: 'space-between', minHeight: '48px !important', py: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {handleDrawerToggle && (
+            <Box
+              onClick={handleDrawerToggle}
+              sx={{
+                display: { sm: 'none' }, // Only show on mobile (xs)
+                mr: 2,
+                cursor: 'pointer',
+                p: 1
+              }}
+            >
+              <MenuIcon />
+            </Box>
+          )}
+        </Box>
+
         {/* Right Side: User Menu */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
 
@@ -66,6 +88,7 @@ export default function TopBar(): React.ReactElement {
             onClick={handleUserMenuOpen}
           >
             <Avatar
+              src={user?.profileImageUrl ? getImageUrl(user.profileImageUrl) : undefined}
               sx={{
                 width: 32,
                 height: 32,
@@ -111,7 +134,7 @@ export default function TopBar(): React.ReactElement {
               <Divider sx={{ my: 1 }} />
             </Box>
             <MenuItem onClick={handleNavigateProfile}>Profile</MenuItem>
-            <MenuItem onClick={() => { handleUserMenuClose(); /* handle settings */ }}>Settings</MenuItem>
+            <MenuItem onClick={() => { handleUserMenuClose(); navigate(ROUTES.SETTINGS); }}>Settings</MenuItem>
             <Divider sx={{ my: 0.5 }} />
             <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
               Logout

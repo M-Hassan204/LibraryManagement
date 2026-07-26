@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query';
@@ -10,7 +10,7 @@ import '@fontsource/inter/700.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { createAppTheme } from '@/theme/theme';
 import { router } from '@/router';
-import type { PaletteMode } from '@mui/material';
+import { SettingsProvider, useSettings } from '@/context/SettingsContext';
 
 // ─── QueryClient Wrapper ──────────────────────────────────────────────────────
 function AppProviders({ children }: { children: React.ReactNode }) {
@@ -40,26 +40,36 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <SettingsProvider>
+        {children}
+      </SettingsProvider>
     </QueryClientProvider>
   );
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
-function App(): React.ReactElement {
-  const [mode] = useState<'light' | 'dark'>('light');
-  const theme = useMemo(() => createAppTheme(mode as PaletteMode), [mode]);
+function ThemeWrapper({ children }: { children: React.ReactNode }) {
+  const { computedMode } = useSettings();
+  const theme = useMemo(() => createAppTheme(computedMode), [computedMode]);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-        <AppProviders>
-          <AuthProvider>
-            <RouterProvider router={router} />
-          </AuthProvider>
-        </AppProviders>
+      {children}
     </ThemeProvider>
+  );
+}
+
+function App(): React.ReactElement {
+  return (
+    <AppProviders>
+      <ThemeWrapper>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </ThemeWrapper>
+    </AppProviders>
   );
 }
 

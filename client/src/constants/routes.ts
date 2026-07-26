@@ -45,4 +45,5 @@ export const ROUTES = {
 
   // Shared (any authenticated user)
   PROFILE: '/app/profile',
+  SETTINGS: '/app/settings',
 } as const;

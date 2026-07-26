@@ -20,6 +20,7 @@ export default function CreateBookPage(): React.ReactElement {
         publishedYear: data.publishedYear,
         categoryId: data.categoryId,
         authorId: data.authorId,
+        coverImageUrl: data.coverImageUrl,
       });
 
       if (file && newBook.id) {
