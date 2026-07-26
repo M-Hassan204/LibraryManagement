@@ -17,6 +17,10 @@ import {
   Typography,
   Toolbar,
   Tooltip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -58,6 +62,17 @@ export default function AdminBooksPage(): React.ReactElement {
 
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setParams((prev) => ({ ...prev, pageSize: parseInt(event.target.value, 10), pageNumber: 1 }));
+  };
+
+  const handleSortChange = (event: any) => {
+    const value = event.target.value;
+    const [sortBy, sortDescending] = value.split('|');
+    setParams((prev) => ({ 
+      ...prev, 
+      sortBy, 
+      sortDescending: sortDescending === 'desc',
+      pageNumber: 1
+    }));
   };
 
   const handleDeleteClick = (id: number) => {
@@ -114,7 +129,7 @@ export default function AdminBooksPage(): React.ReactElement {
       </Box>
 
       <Card>
-        <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 }, py: 2 }}>
+        <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 }, py: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <TextField
               variant="outlined"
               size="small"
@@ -130,8 +145,24 @@ export default function AdminBooksPage(): React.ReactElement {
                   ),
                 }
               }}
-              sx={{ width: { xs: '100%', sm: 400 } }}
+              sx={{ flexGrow: 1, minWidth: 300 }}
             />
+            
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel id="sort-by-label">Sort By</InputLabel>
+              <Select
+                labelId="sort-by-label"
+                value={`${params.sortBy}|${params.sortDescending ? 'desc' : 'asc'}`}
+                label="Sort By"
+                onChange={handleSortChange}
+              >
+                <MenuItem value="title|asc">Title (A-Z)</MenuItem>
+                <MenuItem value="title|desc">Title (Z-A)</MenuItem>
+                <MenuItem value="publishedYear|desc">Newest First</MenuItem>
+                <MenuItem value="publishedYear|asc">Oldest First</MenuItem>
+                <MenuItem value="id|desc">Recently Added</MenuItem>
+              </Select>
+            </FormControl>
         </Toolbar>
 
         <TableContainer>

@@ -11,31 +11,31 @@ export const booksApi = {
     params: ResourceParameters,
   ): Promise<ApiResponse<PagedResult<BookDto>>> {
     return axiosInstance
-      .get<ApiResponse<PagedResult<BookDto>>>('/books', { params })
+      .get<ApiResponse<PagedResult<BookDto>>>('/book', { params })
       .then((res) => res.data);
   },
 
   getById(id: number): Promise<ApiResponse<BookDto>> {
     return axiosInstance
-      .get<ApiResponse<BookDto>>(`/books/${id}`)
+      .get<ApiResponse<BookDto>>(`/book/${id}`)
       .then((res) => res.data);
   },
 
   create(data: CreateBookRequestDto): Promise<ApiResponse<BookDto>> {
     return axiosInstance
-      .post<ApiResponse<BookDto>>('/books', data)
+      .post<ApiResponse<BookDto>>('/book', data)
       .then((res) => res.data);
   },
 
   update(id: number, data: UpdateBookRequestDto): Promise<ApiResponse<BookDto>> {
     return axiosInstance
-      .put<ApiResponse<BookDto>>(`/books/${id}`, data)
+      .put<ApiResponse<BookDto>>(`/book/${id}`, data)
       .then((res) => res.data);
   },
 
   delete(id: number): Promise<ApiResponse<boolean>> {
     return axiosInstance
-      .delete<ApiResponse<boolean>>(`/books/${id}`)
+      .delete<ApiResponse<boolean>>(`/book/${id}`)
       .then((res) => res.data);
   },
 
@@ -43,7 +43,7 @@ export const booksApi = {
     const formData = new FormData();
     formData.append('file', file);
     return axiosInstance
-      .post<ApiResponse<BookDto>>(`/books/${id}/cover-image`, formData, {
+      .post<ApiResponse<BookDto>>(`/book/${id}/cover-image`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       .then((res) => res.data);

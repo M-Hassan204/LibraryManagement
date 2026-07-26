@@ -9,7 +9,7 @@ import type {
 export const usersApi = {
   getProfile(): Promise<ApiResponse<UserDto>> {
     return axiosInstance
-      .get<ApiResponse<UserDto>>('/users/me')
+      .get<ApiResponse<UserDto>>('/user/me')
       .then((res) => res.data);
   },
 
@@ -17,7 +17,7 @@ export const usersApi = {
     data: UpdateProfileRequestDto,
   ): Promise<ApiResponse<UserDto>> {
     return axiosInstance
-      .put<ApiResponse<UserDto>>('/users/me', data)
+      .put<ApiResponse<UserDto>>('/user/me', data)
       .then((res) => res.data);
   },
 
@@ -25,7 +25,7 @@ export const usersApi = {
     data: ChangePasswordRequestDto,
   ): Promise<ApiResponse<boolean>> {
     return axiosInstance
-      .post<ApiResponse<boolean>>('/users/me/change-password', data)
+      .post<ApiResponse<boolean>>('/user/me/change-password', data)
       .then((res) => res.data);
   },
 };

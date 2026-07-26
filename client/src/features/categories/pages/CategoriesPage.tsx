@@ -17,8 +17,10 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { Skeleton, Snackbar, Alert as MuiAlert } from '@mui/material';
 import { useCategories, useDeleteCategory } from '../hooks/useCategories';
 import { ROUTES } from '@/constants/routes';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -30,6 +32,10 @@ export default function CategoriesPage(): React.ReactElement {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
 
+  const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
+
   const handleDeleteClick = (id: number) => {
     setCategoryToDelete(id);
     setDeleteDialogOpen(true);
@@ -37,7 +43,12 @@ export default function CategoriesPage(): React.ReactElement {
 
   const handleConfirmDelete = async () => {
     if (categoryToDelete !== null) {
-      await deleteMutation.mutateAsync(categoryToDelete);
+      try {
+        await deleteMutation.mutateAsync(categoryToDelete);
+        setSnackbar({ open: true, message: 'Category deleted successfully', severity: 'success' });
+      } catch (err: any) {
+        setSnackbar({ open: true, message: err.message || 'Failed to delete category', severity: 'error' });
+      }
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);
     }
@@ -76,11 +87,19 @@ export default function CategoriesPage(): React.ReactElement {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
-                    Loading categories...
-                  </TableCell>
-                </TableRow>
+                Array.from(new Array(3)).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton animation="wave" height={24} width="60%" /></TableCell>
+                    <TableCell><Skeleton animation="wave" height={24} width="80%" /></TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="circular" width={32} height={32} />
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center" sx={{ py: 3 }} color="error">
@@ -101,6 +120,14 @@ export default function CategoriesPage(): React.ReactElement {
                       {category.description || '-'}
                     </TableCell>
                     <TableCell align="right">
+                      <Tooltip title="View Details">
+                        <IconButton
+                          color="info"
+                          onClick={() => navigate(`/app/categories/${category.id}`)}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Edit">
                         <IconButton
                           color="primary"
@@ -136,6 +163,11 @@ export default function CategoriesPage(): React.ReactElement {
         confirmText="Delete"
         confirmColor="error"
       />
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <MuiAlert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

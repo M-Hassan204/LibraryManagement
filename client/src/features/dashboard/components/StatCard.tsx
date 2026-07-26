@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Skeleton, alpha } from '@mui/material';
+import { Card, CardContent, Typography, Box, Skeleton, alpha, CardActionArea } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 interface StatCardProps {
@@ -8,9 +8,10 @@ interface StatCardProps {
   icon?: React.ReactNode;
   isLoading?: boolean;
   color?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
+  onClick?: () => void;
 }
 
-export function StatCard({ title, value, icon, isLoading, color = 'primary' }: StatCardProps): React.ReactElement {
+export function StatCard({ title, value, icon, isLoading, color = 'primary', onClick }: StatCardProps): React.ReactElement {
   const theme = useTheme();
 
   return (
@@ -26,10 +27,10 @@ export function StatCard({ title, value, icon, isLoading, color = 'primary' }: S
         overflow: 'hidden',
         border: '1px solid',
         borderColor: 'divider',
-        '&:hover': {
+        '&:hover': onClick ? {
           transform: 'translateY(-5px)',
           boxShadow: '0 12px 28px 0 rgba(0,0,0,0.08)',
-        },
+        } : {},
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -41,38 +42,40 @@ export function StatCard({ title, value, icon, isLoading, color = 'primary' }: S
         }
       }}
     >
-      <CardContent sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 3, '&:last-child': { pb: 3 } }}>
-        <Box sx={{ width: '100%' }}>
-          <Typography color="text.secondary" gutterBottom variant="subtitle2" sx={{ fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            {title}
-          </Typography>
-          {isLoading ? (
-            <Skeleton variant="text" width="60%" height={48} />
-          ) : (
-            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-              {value}
+      <CardActionArea onClick={onClick} disabled={!onClick} sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <CardContent sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 3, '&:last-child': { pb: 3 } }}>
+          <Box sx={{ width: '100%' }}>
+            <Typography color="text.secondary" gutterBottom variant="subtitle2" sx={{ fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {title}
             </Typography>
-          )}
-        </Box>
-        {icon && (
-          <Box
-            sx={{
-              backgroundColor: alpha(theme.palette[color].main, 0.1),
-              color: `${color}.main`,
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 60,
-              height: 60,
-              flexShrink: 0,
-              ml: 2,
-            }}
-          >
-            {isLoading ? <Skeleton variant="circular" width={60} height={60} /> : icon}
+            {isLoading ? (
+              <Skeleton variant="text" width="60%" height={48} />
+            ) : (
+              <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                {value}
+              </Typography>
+            )}
           </Box>
-        )}
-      </CardContent>
+          {icon && (
+            <Box
+              sx={{
+                backgroundColor: alpha(theme.palette[color].main, 0.1),
+                color: `${color}.main`,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 60,
+                height: 60,
+                flexShrink: 0,
+                ml: 2,
+              }}
+            >
+              {isLoading ? <Skeleton variant="circular" width={60} height={60} /> : icon}
+            </Box>
+          )}
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 }

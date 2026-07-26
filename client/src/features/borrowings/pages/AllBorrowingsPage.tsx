@@ -18,13 +18,17 @@ import {
 import { 
   CheckCircle as CheckCircleIcon,
   Add as AddIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { Skeleton, Snackbar, Alert as MuiAlert } from '@mui/material';
 import { useAllBorrowings, useReturnBook } from '../hooks/useBorrowings';
 import { BorrowingStatus } from '@/types/borrowing.types';
 import type { ResourceParameters } from '@/types/api.types';
 import { BorrowBookDialog } from '../components/BorrowBookDialog';
 
 export default function AllBorrowingsPage(): React.ReactElement {
+  const navigate = useNavigate();
   const [params, setParams] = useState<ResourceParameters>({
     pageNumber: 1,
     pageSize: 50,
@@ -37,6 +41,9 @@ export default function AllBorrowingsPage(): React.ReactElement {
 
   const { data: pagedBorrowings, isLoading, isError, error } = useAllBorrowings(params);
   const returnMutation = useReturnBook();
+  const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setParams((prev) => ({ ...prev, pageNumber: newPage + 1 }));
@@ -48,7 +55,12 @@ export default function AllBorrowingsPage(): React.ReactElement {
 
   const handleReturn = async (id: number) => {
     if (window.confirm('Mark this book as returned?')) {
-      await returnMutation.mutateAsync({ id, data: { notes: 'Returned by Admin' } });
+      try {
+        await returnMutation.mutateAsync({ id, data: { notes: 'Returned by Admin' } });
+        setSnackbar({ open: true, message: 'Book returned successfully', severity: 'success' });
+      } catch (err: any) {
+        setSnackbar({ open: true, message: err.message || 'Failed to return book', severity: 'error' });
+      }
     }
   };
 
@@ -134,11 +146,22 @@ export default function AllBorrowingsPage(): React.ReactElement {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    Loading borrowings...
-                  </TableCell>
-                </TableRow>
+                Array.from(new Array(3)).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton animation="wave" height={24} width="60%" /></TableCell>
+                    <TableCell><Skeleton animation="wave" height={24} width="60%" /></TableCell>
+                    <TableCell><Skeleton animation="wave" height={24} width="80%" /></TableCell>
+                    <TableCell><Skeleton animation="wave" height={24} width="80%" /></TableCell>
+                    <TableCell><Skeleton animation="wave" height={24} width="80%" /></TableCell>
+                    <TableCell><Skeleton animation="wave" height={24} width={80} /></TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="circular" width={32} height={32} />
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 3 }} color="error">
@@ -169,6 +192,16 @@ export default function AllBorrowingsPage(): React.ReactElement {
                       />
                     </TableCell>
                     <TableCell align="right">
+                      <Button
+                        size="small"
+                        variant="text"
+                        color="info"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() => navigate(`/app/borrowings/${borrowing.id}`)}
+                        sx={{ mr: 1 }}
+                      >
+                        Details
+                      </Button>
                       {borrowing.status !== BorrowingStatus.Returned && (
                         <Button
                           size="small"
@@ -204,6 +237,11 @@ export default function AllBorrowingsPage(): React.ReactElement {
         open={borrowDialogOpen}
         onClose={() => setBorrowDialogOpen(false)}
       />
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <MuiAlert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

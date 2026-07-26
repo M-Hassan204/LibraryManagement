@@ -19,6 +19,7 @@ const BookDetailPage = lazy(() => import('@/features/books/pages/BookDetailPage'
 
 // App shell layout (authenticated wrapper)
 const AppShell = lazy(() => import('@/components/layout/AppShell'));
+const HomePage = lazy(() => import('@/features/dashboard/pages/HomePage'));
 
 // Admin pages
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
@@ -26,12 +27,15 @@ const AdminBooksPage = lazy(() => import('@/features/books/pages/AdminBooksPage'
 const CreateBookPage = lazy(() => import('@/features/books/pages/CreateBookPage'));
 const EditBookPage = lazy(() => import('@/features/books/pages/EditBookPage'));
 const AuthorsPage = lazy(() => import('@/features/authors/pages/AuthorsPage'));
+const AuthorDetailPage = lazy(() => import('@/features/authors/pages/AuthorDetailPage'));
 const CreateAuthorPage = lazy(() => import('@/features/authors/pages/CreateAuthorPage'));
 const EditAuthorPage = lazy(() => import('@/features/authors/pages/EditAuthorPage'));
 const CategoriesPage = lazy(() => import('@/features/categories/pages/CategoriesPage'));
+const CategoryDetailPage = lazy(() => import('@/features/categories/pages/CategoryDetailPage'));
 const CreateCategoryPage = lazy(() => import('@/features/categories/pages/CreateCategoryPage'));
 const EditCategoryPage = lazy(() => import('@/features/categories/pages/EditCategoryPage'));
 const AllBorrowingsPage = lazy(() => import('@/features/borrowings/pages/AllBorrowingsPage'));
+const BorrowingDetailPage = lazy(() => import('@/features/borrowings/pages/BorrowingDetailPage'));
 const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'));
 
 // Authenticated (any role) pages
@@ -135,7 +139,17 @@ export const router = createBrowserRouter([
       // Default /app redirect
       {
         index: true,
-        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+        element: <Navigate to="/app/home" replace />,
+      },
+
+      // Authenticated user routes
+      {
+        path: '/app/home',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <HomePage />
+          </Suspense>
+        ),
       },
 
       // Admin-only routes
@@ -200,6 +214,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/app/authors/:id',
+        element: (
+          <AdminRoute>
+            <Suspense fallback={<PageLoader />}>
+              <AuthorDetailPage />
+            </Suspense>
+          </AdminRoute>
+        ),
+      },
+      {
         path: '/app/authors/:id/edit',
         element: (
           <AdminRoute>
@@ -230,6 +254,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/app/categories/:id',
+        element: (
+          <AdminRoute>
+            <Suspense fallback={<PageLoader />}>
+              <CategoryDetailPage />
+            </Suspense>
+          </AdminRoute>
+        ),
+      },
+      {
         path: '/app/categories/:id/edit',
         element: (
           <AdminRoute>
@@ -245,6 +279,16 @@ export const router = createBrowserRouter([
           <AdminRoute>
             <Suspense fallback={<PageLoader />}>
               <AllBorrowingsPage />
+            </Suspense>
+          </AdminRoute>
+        ),
+      },
+      {
+        path: '/app/borrowings/:id',
+        element: (
+          <AdminRoute>
+            <Suspense fallback={<PageLoader />}>
+              <BorrowingDetailPage />
             </Suspense>
           </AdminRoute>
         ),

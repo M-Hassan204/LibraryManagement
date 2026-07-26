@@ -10,6 +10,8 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  Snackbar,
+  Alert as MuiAlert,
 } from '@mui/material';
 import { useBooks } from '../../books/hooks/useBooks';
 import { useBorrowBook } from '../hooks/useBorrowings';
@@ -30,12 +32,20 @@ export function BorrowBookDialog({ open, onClose }: BorrowBookDialogProps): Reac
   });
   
   const borrowMutation = useBorrowBook();
+  const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
 
   const handleBorrow = async () => {
     if (selectedBookId !== '') {
-      await borrowMutation.mutateAsync({ bookId: selectedBookId as number });
-      setSelectedBookId('');
-      onClose();
+      try {
+        await borrowMutation.mutateAsync({ bookId: selectedBookId as number });
+        setSnackbar({ open: true, message: 'Book borrowed successfully', severity: 'success' });
+        setSelectedBookId('');
+        onClose();
+      } catch (err: any) {
+        setSnackbar({ open: true, message: err.message || 'Failed to borrow book', severity: 'error' });
+      }
     }
   };
 
@@ -76,6 +86,11 @@ export function BorrowBookDialog({ open, onClose }: BorrowBookDialogProps): Reac
           {borrowMutation.isPending ? 'Borrowing...' : 'Borrow Book'}
         </Button>
       </DialogActions>
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <MuiAlert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Dialog>
   );
 }

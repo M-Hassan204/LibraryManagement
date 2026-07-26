@@ -23,7 +23,8 @@ public static class InfrastructureServiceExtensions
     /// <returns>The updated service collection for method chaining.</returns>
     public static IServiceCollection AddInfrastructureServices(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        bool isDevelopment)
     {
         // --- EF Core ---
         services.AddDbContext<AppDbContext>(options =>
@@ -59,7 +60,7 @@ public static class InfrastructureServiceExtensions
 
             // User settings
             options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedEmail = true;
+            options.SignIn.RequireConfirmedEmail = !isDevelopment;
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();

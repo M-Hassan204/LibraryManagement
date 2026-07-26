@@ -11,23 +11,26 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import GroupIcon from '@mui/icons-material/Group';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { useNavigate } from 'react-router-dom';
 
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { StatCard } from '../components/StatCard';
 import { TopBorrowedBooksTable } from '../components/TopBorrowedBooksTable';
-import { DashboardHeader } from '../components/DashboardHeader';
 import { QuickActions } from '../components/QuickActions';
 import { SystemStatusWidget } from '../components/SystemStatusWidget';
 import { EmptyChartsWidget } from '../components/EmptyChartsWidget';
+import { ROUTES } from '@/constants/routes';
 
 export default function DashboardPage(): React.ReactElement {
   const { data, isLoading, isError, error, refetch } = useDashboardStats();
+  const navigate = useNavigate();
 
   return (
     <Box sx={{ pb: 8 }}>
       <Container maxWidth="xl" sx={{ pt: 4 }}>
-        
-        <DashboardHeader />
+        <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
+          Admin Dashboard
+        </Typography>
 
         {isError && (
           <Alert
@@ -53,6 +56,7 @@ export default function DashboardPage(): React.ReactElement {
               icon={<AutoStoriesIcon fontSize="large" />}
               isLoading={isLoading}
               color="primary"
+              onClick={() => navigate(ROUTES.ADMIN_BOOKS)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -62,6 +66,7 @@ export default function DashboardPage(): React.ReactElement {
               icon={<GroupIcon fontSize="large" />}
               isLoading={isLoading}
               color="secondary"
+              onClick={() => navigate(ROUTES.USERS)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -71,6 +76,7 @@ export default function DashboardPage(): React.ReactElement {
               icon={<AutorenewIcon fontSize="large" />}
               isLoading={isLoading}
               color="info"
+              onClick={() => navigate(ROUTES.BORROWINGS)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -80,6 +86,7 @@ export default function DashboardPage(): React.ReactElement {
               icon={<WarningAmberIcon fontSize="large" />}
               isLoading={isLoading}
               color="error"
+              onClick={() => navigate(ROUTES.BORROWINGS)}
             />
           </Grid>
         </Grid>

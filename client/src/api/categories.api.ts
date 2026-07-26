@@ -9,19 +9,19 @@ import type {
 export const categoriesApi = {
   getAll(): Promise<ApiResponse<CategoryDto[]>> {
     return axiosInstance
-      .get<ApiResponse<CategoryDto[]>>('/categories')
+      .get<ApiResponse<CategoryDto[]>>('/category')
       .then((res) => res.data);
   },
 
   getById(id: number): Promise<ApiResponse<CategoryDto>> {
     return axiosInstance
-      .get<ApiResponse<CategoryDto>>(`/categories/${id}`)
+      .get<ApiResponse<CategoryDto>>(`/category/${id}`)
       .then((res) => res.data);
   },
 
   create(data: CreateCategoryRequestDto): Promise<ApiResponse<CategoryDto>> {
     return axiosInstance
-      .post<ApiResponse<CategoryDto>>('/categories', data)
+      .post<ApiResponse<CategoryDto>>('/category', data)
       .then((res) => res.data);
   },
 
@@ -30,13 +30,13 @@ export const categoriesApi = {
     data: UpdateCategoryRequestDto,
   ): Promise<ApiResponse<CategoryDto>> {
     return axiosInstance
-      .put<ApiResponse<CategoryDto>>(`/categories/${id}`, data)
+      .put<ApiResponse<CategoryDto>>(`/category/${id}`, data)
       .then((res) => res.data);
   },
 
   delete(id: number): Promise<ApiResponse<boolean>> {
     return axiosInstance
-      .delete<ApiResponse<boolean>>(`/categories/${id}`)
+      .delete<ApiResponse<boolean>>(`/category/${id}`)
       .then((res) => res.data);
   },
 };

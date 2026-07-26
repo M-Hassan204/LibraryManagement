@@ -17,6 +17,21 @@ export function useAllBorrowings(params: ResourceParameters) {
     },
   });
 }
+export const BORROWING_QUERY_KEY = 'borrowing';
+
+export function useBorrowing(id: number, enabled: boolean = true) {
+  return useQuery({
+    queryKey: [BORROWING_QUERY_KEY, id],
+    queryFn: async () => {
+      const response = await borrowingsApi.getById(id);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch borrowing details');
+      }
+      return response.data;
+    },
+    enabled,
+  });
+}
 
 export function useReturnBook() {
   const queryClient = useQueryClient();

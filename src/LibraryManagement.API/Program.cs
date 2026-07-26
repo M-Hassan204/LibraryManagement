@@ -31,7 +31,7 @@ try
                      .Enrich.FromLogContext());
 
     // ─── Infrastructure (EF Core + Identity + UoW) ─────────────
-    builder.Services.AddInfrastructureServices(builder.Configuration);
+    builder.Services.AddInfrastructureServices(builder.Configuration, builder.Environment.IsDevelopment());
 
     // ─── Strongly-typed settings ───────────────────────────────
     builder.Services.Configure<JwtSettings>(

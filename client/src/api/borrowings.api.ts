@@ -11,25 +11,25 @@ export const borrowingsApi = {
     params: ResourceParameters,
   ): Promise<ApiResponse<PagedResult<BorrowingDto>>> {
     return axiosInstance
-      .get<ApiResponse<PagedResult<BorrowingDto>>>('/borrowings', { params })
+      .get<ApiResponse<PagedResult<BorrowingDto>>>('/borrowing', { params })
       .then((res) => res.data);
   },
 
   getById(id: number): Promise<ApiResponse<BorrowingDto>> {
     return axiosInstance
-      .get<ApiResponse<BorrowingDto>>(`/borrowings/${id}`)
+      .get<ApiResponse<BorrowingDto>>(`/borrowing/${id}`)
       .then((res) => res.data);
   },
 
   getMyBorrowings(): Promise<ApiResponse<BorrowingDto[]>> {
     return axiosInstance
-      .get<ApiResponse<BorrowingDto[]>>('/borrowings/my-borrowings')
+      .get<ApiResponse<BorrowingDto[]>>('/borrowing/my-borrowings')
       .then((res) => res.data);
   },
 
   borrowBook(data: BorrowBookRequestDto): Promise<ApiResponse<BorrowingDto>> {
     return axiosInstance
-      .post<ApiResponse<BorrowingDto>>('/borrowings/borrow', data)
+      .post<ApiResponse<BorrowingDto>>('/borrowing/borrow', data)
       .then((res) => res.data);
   },
 
@@ -38,7 +38,7 @@ export const borrowingsApi = {
     data: ReturnBookRequestDto,
   ): Promise<ApiResponse<BorrowingDto>> {
     return axiosInstance
-      .post<ApiResponse<BorrowingDto>>(`/borrowings/${id}/return`, data)
+      .post<ApiResponse<BorrowingDto>>(`/borrowing/${id}/return`, data)
       .then((res) => res.data);
   },
 };

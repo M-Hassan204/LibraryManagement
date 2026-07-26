@@ -106,7 +106,8 @@ public class AuthService : IAuthService
         if (!isPasswordValid)
             throw new UnauthorizedException("Invalid email or password.");
 
-        if (!user.EmailConfirmed)
+        var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+        if (!user.EmailConfirmed && !isDevelopment)
             throw new UnauthorizedException("Email is not verified. Please verify your email first.");
 
         // Here we could implement Two-Factor Auth check

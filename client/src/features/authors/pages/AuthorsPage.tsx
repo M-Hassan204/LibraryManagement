@@ -17,8 +17,10 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { Skeleton, Snackbar, Alert as MuiAlert } from '@mui/material';
 import { useAuthors, useDeleteAuthor } from '../hooks/useAuthors';
 import { ROUTES } from '@/constants/routes';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -30,6 +32,10 @@ export default function AuthorsPage(): React.ReactElement {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [authorToDelete, setAuthorToDelete] = useState<number | null>(null);
 
+  const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
+
   const handleDeleteClick = (id: number) => {
     setAuthorToDelete(id);
     setDeleteDialogOpen(true);
@@ -37,7 +43,12 @@ export default function AuthorsPage(): React.ReactElement {
 
   const handleConfirmDelete = async () => {
     if (authorToDelete !== null) {
-      await deleteMutation.mutateAsync(authorToDelete);
+      try {
+        await deleteMutation.mutateAsync(authorToDelete);
+        setSnackbar({ open: true, message: 'Author deleted successfully', severity: 'success' });
+      } catch (err: any) {
+        setSnackbar({ open: true, message: err.message || 'Failed to delete author', severity: 'error' });
+      }
       setDeleteDialogOpen(false);
       setAuthorToDelete(null);
     }
@@ -76,11 +87,19 @@ export default function AuthorsPage(): React.ReactElement {
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
-                    Loading authors...
-                  </TableCell>
-                </TableRow>
+                Array.from(new Array(3)).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton animation="wave" height={24} width="60%" /></TableCell>
+                    <TableCell><Skeleton animation="wave" height={24} width="80%" /></TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="circular" width={32} height={32} />
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : isError ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center" sx={{ py: 3 }} color="error">
@@ -101,6 +120,14 @@ export default function AuthorsPage(): React.ReactElement {
                       {author.biography || '-'}
                     </TableCell>
                     <TableCell align="right">
+                      <Tooltip title="View Details">
+                        <IconButton
+                          color="info"
+                          onClick={() => navigate(`/app/authors/${author.id}`)}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Edit">
                         <IconButton
                           color="primary"
@@ -136,6 +163,11 @@ export default function AuthorsPage(): React.ReactElement {
         confirmText="Delete"
         confirmColor="error"
       />
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <MuiAlert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

@@ -9,19 +9,19 @@ import type {
 export const authorsApi = {
   getAll(): Promise<ApiResponse<AuthorDto[]>> {
     return axiosInstance
-      .get<ApiResponse<AuthorDto[]>>('/authors')
+      .get<ApiResponse<AuthorDto[]>>('/author')
       .then((res) => res.data);
   },
 
   getById(id: number): Promise<ApiResponse<AuthorDto>> {
     return axiosInstance
-      .get<ApiResponse<AuthorDto>>(`/authors/${id}`)
+      .get<ApiResponse<AuthorDto>>(`/author/${id}`)
       .then((res) => res.data);
   },
 
   create(data: CreateAuthorRequestDto): Promise<ApiResponse<AuthorDto>> {
     return axiosInstance
-      .post<ApiResponse<AuthorDto>>('/authors', data)
+      .post<ApiResponse<AuthorDto>>('/author', data)
       .then((res) => res.data);
   },
 
@@ -30,13 +30,13 @@ export const authorsApi = {
     data: UpdateAuthorRequestDto,
   ): Promise<ApiResponse<AuthorDto>> {
     return axiosInstance
-      .put<ApiResponse<AuthorDto>>(`/authors/${id}`, data)
+      .put<ApiResponse<AuthorDto>>(`/author/${id}`, data)
       .then((res) => res.data);
   },
 
   delete(id: number): Promise<ApiResponse<boolean>> {
     return axiosInstance
-      .delete<ApiResponse<boolean>>(`/authors/${id}`)
+      .delete<ApiResponse<boolean>>(`/author/${id}`)
       .then((res) => res.data);
   },
 };
