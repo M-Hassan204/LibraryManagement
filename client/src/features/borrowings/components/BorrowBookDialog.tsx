@@ -39,7 +39,7 @@ export function BorrowBookDialog({ open, onClose }: BorrowBookDialogProps): Reac
   const handleBorrow = async () => {
     if (selectedBookId !== '') {
       try {
-        await borrowMutation.mutateAsync({ bookId: selectedBookId as number });
+        await borrowMutation.mutateAsync({ bookId: selectedBookId as number, homeDelivery: false });
         setSnackbar({ open: true, message: 'Book borrowed successfully', severity: 'success' });
         setSelectedBookId('');
         onClose();

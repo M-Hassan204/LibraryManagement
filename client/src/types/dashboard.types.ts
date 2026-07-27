@@ -3,6 +3,7 @@
 export interface TopBookDto {
   bookId: number;
   title: string;
+  authorName: string;
   borrowCount: number;
 }
 

@@ -26,7 +26,9 @@ import {
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useAuth } from '@/context/AuthContext';
+import { APP_ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
 
 const DRAWER_WIDTH_EXPANDED = 260;
@@ -41,7 +43,8 @@ export default function Sidebar({ mobileOpen = false, handleDrawerToggle }: Side
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
+  const isLibrarian = user?.roles?.includes(APP_ROLES.Librarian) && !isAdmin;
   
   // Responsive breakpoints
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg')); // >= 1200px
@@ -59,15 +62,22 @@ export default function Sidebar({ mobileOpen = false, handleDrawerToggle }: Side
     ...(isAdmin ? [
       { title: 'Admin Dashboard', icon: <DashboardIcon />, path: ROUTES.DASHBOARD },
     ] : []),
-    { title: 'Books', icon: <BooksIcon />, path: isAdmin ? ROUTES.ADMIN_BOOKS : ROUTES.BOOKS },
-    ...(isAdmin ? [
+    ...(isLibrarian ? [
+      { title: 'Librarian Dashboard', icon: <DashboardIcon />, path: '/app/librarian/dashboard' },
+    ] : []),
+    { title: 'Books', icon: <BooksIcon />, path: isAdmin || isLibrarian ? ROUTES.ADMIN_BOOKS : ROUTES.BOOKS },
+    ...(isAdmin || isLibrarian ? [
       { title: 'Authors', icon: <AuthorsIcon />, path: ROUTES.AUTHORS },
       { title: 'Categories', icon: <CategoriesIcon />, path: ROUTES.CATEGORIES },
       { title: 'Borrowings', icon: <BorrowingsIcon />, path: ROUTES.BORROWINGS },
-      { title: 'Users', icon: <UsersIcon />, path: ROUTES.USERS },
+      { title: 'Deliveries', icon: <BorrowingsIcon />, path: ROUTES.ADMIN_DELIVERIES },
     ] : [
       { title: 'My Borrowings', icon: <BorrowingsIcon />, path: ROUTES.MY_BORROWINGS },
     ]),
+    ...(isAdmin ? [
+      { title: 'Users', icon: <UsersIcon />, path: ROUTES.USERS },
+      { title: 'Subscriptions', icon: <WorkspacePremiumIcon />, path: ROUTES.ADMIN_SUBSCRIPTIONS },
+    ] : []),
   ];
 
   const bottomItems = [

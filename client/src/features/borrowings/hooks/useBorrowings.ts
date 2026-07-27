@@ -4,6 +4,8 @@ import type { ResourceParameters } from '@/types/api.types';
 import type { ReturnBookRequestDto, BorrowBookRequestDto } from '@/types/borrowing.types';
 
 export const ALL_BORROWINGS_QUERY_KEY = 'allBorrowings';
+export const MY_BORROWINGS_QUERY_KEY = 'myBorrowings';
+export const BORROWING_QUERY_KEY = 'borrowing';
 
 export function useAllBorrowings(params: ResourceParameters) {
   return useQuery({
@@ -17,7 +19,6 @@ export function useAllBorrowings(params: ResourceParameters) {
     },
   });
 }
-export const BORROWING_QUERY_KEY = 'borrowing';
 
 export function useBorrowing(id: number, enabled: boolean = true) {
   return useQuery({
@@ -61,6 +62,18 @@ export function useBorrowBook() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ALL_BORROWINGS_QUERY_KEY] });
+    },
+  });
+}
+export function useMyBorrowings() {
+  return useQuery({
+    queryKey: [MY_BORROWINGS_QUERY_KEY],
+    queryFn: async () => {
+      const response = await borrowingsApi.getMyBorrowings();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch my borrowings');
+      }
+      return response.data;
     },
   });
 }

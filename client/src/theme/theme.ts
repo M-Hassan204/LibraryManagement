@@ -88,10 +88,14 @@ export const createAppTheme = (mode: PaletteMode) =>
           root: {
             borderRadius: 12,
             backgroundImage: 'none',
+            transition: 'box-shadow 0.3s ease, transform 0.3s ease',
             border:
               mode === 'dark'
                 ? '1px solid rgba(255,255,255,0.06)'
                 : '1px solid rgba(0,0,0,0.06)',
+            '&:hover': {
+              boxShadow: mode === 'dark' ? '0 8px 24px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.1)',
+            },
           },
         },
       },
@@ -180,6 +184,28 @@ export const createAppTheme = (mode: PaletteMode) =>
         styleOverrides: {
           root: {
             borderRadius: 10,
+          },
+        },
+      },
+
+      MuiSkeleton: {
+        defaultProps: {
+          animation: 'wave',
+        },
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+          },
+        },
+      },
+
+      MuiTableRow: {
+        styleOverrides: {
+          root: {
+            transition: 'background-color 0.2s ease',
+            '&:hover': {
+              backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+            },
           },
         },
       },

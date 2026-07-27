@@ -4,6 +4,7 @@ import type {
   BookDto,
   CreateBookRequestDto,
   UpdateBookRequestDto,
+  BookMetadata,
 } from '@/types/book.types';
 
 export const booksApi = {
@@ -46,6 +47,12 @@ export const booksApi = {
       .post<ApiResponse<BookDto>>(`/book/${id}/cover-image`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
+      .then((res) => res.data);
+  },
+
+  fetchMetadata(params: { isbn?: string; title?: string; author?: string }): Promise<ApiResponse<BookMetadata>> {
+    return axiosInstance
+      .get<ApiResponse<BookMetadata>>('/book/metadata', { params })
       .then((res) => res.data);
   },
 };

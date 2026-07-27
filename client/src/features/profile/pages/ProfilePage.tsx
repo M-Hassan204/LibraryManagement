@@ -18,9 +18,12 @@ import {
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PersonIcon from '@mui/icons-material/Person';
 import SecurityIcon from '@mui/icons-material/Security';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '@/context/AuthContext';
 import { APP_ROLES } from '@/constants/roles';
+import { useSubscription, useUpgradeSubscription, useCancelSubscription } from '../../public/hooks/useSubscriptions';
+import { SubscriptionPlan, SubscriptionStatus } from '@/types/subscription.types';
 
 import ProfileImageUploader from '../components/ProfileImageUploader';
 
@@ -44,6 +47,10 @@ function TabPanel(props: { children?: React.ReactNode; index: number; value: num
 export default function ProfilePage(): React.ReactElement {
   const { profile, isLoading, isError, updateProfile, changePassword } = useProfile();
   const { isAdmin } = useAuth();
+  
+  const { data: subscriptionResponse } = useSubscription(profile?.id);
+  const upgradeMutation = useUpgradeSubscription();
+  const cancelMutation = useCancelSubscription();
   
   const [tabValue, setTabValue] = useState(0);
 
@@ -124,6 +131,16 @@ export default function ProfilePage(): React.ReactElement {
     }
   };
 
+  const handleUpgrade = async () => {
+    await upgradeMutation.mutateAsync();
+  };
+
+  const handleCancel = async () => {
+    await cancelMutation.mutateAsync();
+  };
+
+  const sub = subscriptionResponse?.data;
+
   return (
     <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 2 }}>
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
@@ -190,6 +207,7 @@ export default function ProfilePage(): React.ReactElement {
                 <Tabs value={tabValue} onChange={handleTabChange} aria-label="profile tabs">
                   <Tab icon={<PersonIcon sx={{ mb: '0 !important', mr: 1 }} />} iconPosition="start" label="Edit Profile" />
                   <Tab icon={<SecurityIcon sx={{ mb: '0 !important', mr: 1 }} />} iconPosition="start" label="Security" />
+                  <Tab icon={<WorkspacePremiumIcon sx={{ mb: '0 !important', mr: 1 }} />} iconPosition="start" label="Subscription" />
                 </Tabs>
               </Box>
 
@@ -333,6 +351,49 @@ export default function ProfilePage(): React.ReactElement {
                       </Grid>
                     </Grid>
                   </Box>
+                </TabPanel>
+
+                {/* Tab 3: Subscription */}
+                <TabPanel value={tabValue} index={2}>
+                  {sub ? (
+                    <Box>
+                      <Typography variant="h6" gutterBottom>Current Plan: {SubscriptionPlan[sub.plan]}</Typography>
+                      <Typography variant="body1">Status: {SubscriptionStatus[sub.status]}</Typography>
+                      <Typography variant="body1">Valid until: {new Date(sub.endDate).toLocaleDateString()}</Typography>
+                      
+                      {sub.plan === SubscriptionPlan.Free && sub.status === SubscriptionStatus.Active && (
+                        <Button 
+                          variant="contained" 
+                          color="primary" 
+                          sx={{ mt: 3 }}
+                          onClick={handleUpgrade}
+                          disabled={upgradeMutation.isPending}
+                        >
+                          Upgrade to Premium
+                        </Button>
+                      )}
+                      
+                      {sub.status === SubscriptionStatus.Pending && (
+                        <Alert severity="info" sx={{ mt: 3 }}>
+                          Your Premium upgrade request is pending approval by an admin.
+                        </Alert>
+                      )}
+                      
+                      {sub.plan === SubscriptionPlan.Premium && sub.status === SubscriptionStatus.Active && (
+                        <Button 
+                          variant="outlined" 
+                          color="error" 
+                          sx={{ mt: 3 }}
+                          onClick={handleCancel}
+                          disabled={cancelMutation.isPending}
+                        >
+                          Cancel Subscription
+                        </Button>
+                      )}
+                    </Box>
+                  ) : (
+                    <CircularProgress />
+                  )}
                 </TabPanel>
 
               </Box>

@@ -333,6 +333,92 @@ namespace LibraryManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("Categories", (string)null);
                 });
 
+            modelBuilder.Entity("LibraryManagement.Domain.Entities.DailyReadingLimit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PagesRead")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DailyReadingLimits");
+                });
+
+            modelBuilder.Entity("LibraryManagement.Domain.Entities.DeliveryRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BorrowingRecordId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeliveredDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeliveryAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("RequestedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("BorrowingRecordId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DeliveryRequests");
+                });
+
             modelBuilder.Entity("LibraryManagement.Domain.Entities.EmailVerificationToken", b =>
                 {
                     b.Property<int>("Id")
@@ -368,6 +454,67 @@ namespace LibraryManagement.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("EmailVerificationTokens", (string)null);
+                });
+
+            modelBuilder.Entity("LibraryManagement.Domain.Entities.LibraryBranch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Governorate")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("WorkingHours")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LibraryBranches");
                 });
 
             modelBuilder.Entity("LibraryManagement.Domain.Entities.OtpCode", b =>
@@ -450,6 +597,46 @@ namespace LibraryManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_RefreshTokens_UserId");
 
                     b.ToTable("RefreshTokens", (string)null);
+                });
+
+            modelBuilder.Entity("LibraryManagement.Domain.Entities.Subscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Plan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Subscriptions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -623,6 +810,43 @@ namespace LibraryManagement.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("LibraryManagement.Domain.Entities.DailyReadingLimit", b =>
+                {
+                    b.HasOne("LibraryManagement.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("DailyReadingLimits")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LibraryManagement.Domain.Entities.DeliveryRequest", b =>
+                {
+                    b.HasOne("LibraryManagement.Domain.Entities.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LibraryManagement.Domain.Entities.BorrowingRecord", "BorrowingRecord")
+                        .WithMany()
+                        .HasForeignKey("BorrowingRecordId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LibraryManagement.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("DeliveryRequests")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("BorrowingRecord");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("LibraryManagement.Domain.Entities.EmailVerificationToken", b =>
                 {
                     b.HasOne("LibraryManagement.Domain.Entities.ApplicationUser", "User")
@@ -649,6 +873,17 @@ namespace LibraryManagement.Infrastructure.Persistence.Migrations
                 {
                     b.HasOne("LibraryManagement.Domain.Entities.ApplicationUser", "User")
                         .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LibraryManagement.Domain.Entities.Subscription", b =>
+                {
+                    b.HasOne("LibraryManagement.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("Subscriptions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -711,11 +946,17 @@ namespace LibraryManagement.Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("BorrowingRecords");
 
+                    b.Navigation("DailyReadingLimits");
+
+                    b.Navigation("DeliveryRequests");
+
                     b.Navigation("EmailVerificationTokens");
 
                     b.Navigation("OtpCodes");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("Subscriptions");
                 });
 
             modelBuilder.Entity("LibraryManagement.Domain.Entities.Author", b =>

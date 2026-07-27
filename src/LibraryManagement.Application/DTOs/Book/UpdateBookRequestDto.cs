@@ -14,4 +14,8 @@ public class UpdateBookRequestDto
     
     public int CategoryId { get; set; }
     public int AuthorId { get; set; }
+    
+    public string? Publisher { get; set; }
+    public string? Language { get; set; }
+    public int? Pages { get; set; }
 }

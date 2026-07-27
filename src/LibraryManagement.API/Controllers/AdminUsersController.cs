@@ -89,4 +89,13 @@ public class AdminUsersController : BaseApiController
 
         return Ok(await _adminUserService.RemoveRoleAsync(id, role, currentUserId));
     }
+
+    [HttpPut("{id}/roles")]
+    public async Task<ActionResult<ApiResponse>> UpdateRoles(string id, [FromBody] UpdateRolesRequestDto request)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+        return Ok(await _adminUserService.UpdateRolesAsync(id, request, currentUserId));
+    }
 }

@@ -39,6 +39,8 @@ public static class DbSeeder
             await SeedCategoriesAsync(context, logger);
             await SeedAuthorsAsync(context, logger);
             await SeedBooksAsync(context, logger);
+            await SeedLibraryBranchesAsync(context, logger);
+            await SeedSubscriptionsAsync(context, userManager, logger);
 
             logger.LogInformation("Database seeding completed successfully.");
         }
@@ -228,5 +230,68 @@ public static class DbSeeder
         await context.Books.AddRangeAsync(books);
         await context.SaveChangesAsync();
         logger.LogInformation("Seeded {Count} books.", books.Count);
+    }
+
+    private static async Task SeedLibraryBranchesAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.LibraryBranches.IgnoreQueryFilters().AnyAsync())
+            return;
+
+        var branches = new List<LibraryBranch>
+        {
+            new() { Name = "Main Cairo Library", Governorate = "Cairo", City = "Cairo", Address = "15 Tahrir Square, Downtown", Latitude = 30.0444, Longitude = 31.2357, Phone = "02-12345678", WorkingHours = "09:00 AM - 09:00 PM" },
+            new() { Name = "Giza Central Library", Governorate = "Giza", City = "Giza", Address = "Dokki, Giza", Latitude = 30.0384, Longitude = 31.2065, Phone = "02-12345679", WorkingHours = "09:00 AM - 09:00 PM" },
+            new() { Name = "Alexandrina Library", Governorate = "Alexandria", City = "Alexandria", Address = "Al Azaritah, Alexandria", Latitude = 31.2089, Longitude = 29.9092, Phone = "03-1234567", WorkingHours = "08:00 AM - 10:00 PM" },
+            new() { Name = "Mansoura Public Library", Governorate = "Dakahlia", City = "Mansoura", Address = "Gomhouria St, Mansoura", Latitude = 31.0409, Longitude = 31.3785, Phone = "050-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Zagazig Public Library", Governorate = "Sharqia", City = "Zagazig", Address = "Galaa St, Zagazig", Latitude = 30.5877, Longitude = 31.5020, Phone = "055-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Tanta Library", Governorate = "Gharbia", City = "Tanta", Address = "El Geish St, Tanta", Latitude = 30.7865, Longitude = 31.0004, Phone = "040-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Shibin El Kom Library", Governorate = "Monufia", City = "Shibin El Kom", Address = "Gamal Abd El Nasser St", Latitude = 30.5503, Longitude = 31.0106, Phone = "048-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Damanhour Public Library", Governorate = "Beheira", City = "Damanhour", Address = "Abdel Salam El Shazly St", Latitude = 31.0414, Longitude = 30.4727, Phone = "045-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Kafr El Sheikh Library", Governorate = "Kafr El Sheikh", City = "Kafr El Sheikh", Address = "El Nabawy El Mohandes St", Latitude = 31.1107, Longitude = 30.9388, Phone = "047-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Damietta Library", Governorate = "Damietta", City = "Damietta", Address = "El Kornish St", Latitude = 31.4175, Longitude = 31.8144, Phone = "057-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Port Said Library", Governorate = "Port Said", City = "Port Said", Address = "El Gomhouria St", Latitude = 31.2565, Longitude = 32.2841, Phone = "066-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Ismailia Library", Governorate = "Ismailia", City = "Ismailia", Address = "El Geish St", Latitude = 30.5965, Longitude = 32.2715, Phone = "064-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Suez Library", Governorate = "Suez", City = "Suez", Address = "El Geish St", Latitude = 29.9668, Longitude = 32.5498, Phone = "062-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Arish Library", Governorate = "North Sinai", City = "Arish", Address = "23 July St", Latitude = 31.1316, Longitude = 33.7984, Phone = "068-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Sharm El Sheikh Library", Governorate = "South Sinai", City = "Sharm El Sheikh", Address = "Peace Road", Latitude = 27.9158, Longitude = 34.3299, Phone = "069-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Fayoum Library", Governorate = "Fayoum", City = "Fayoum", Address = "Batal El Salam St", Latitude = 29.3084, Longitude = 30.8428, Phone = "084-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Beni Suef Library", Governorate = "Beni Suef", City = "Beni Suef", Address = "El Geish St", Latitude = 29.0661, Longitude = 31.0994, Phone = "082-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Minya Library", Governorate = "Minya", City = "Minya", Address = "El Kornish St", Latitude = 28.0871, Longitude = 30.7618, Phone = "086-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Assiut Library", Governorate = "Assiut", City = "Assiut", Address = "El Gomhouria St", Latitude = 27.1783, Longitude = 31.1859, Phone = "088-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Sohag Library", Governorate = "Sohag", City = "Sohag", Address = "El Geish St", Latitude = 26.5591, Longitude = 31.6957, Phone = "093-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Qena Library", Governorate = "Qena", City = "Qena", Address = "Luxor St", Latitude = 26.1551, Longitude = 32.7160, Phone = "096-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Luxor Library", Governorate = "Luxor", City = "Luxor", Address = "El Kornish St", Latitude = 25.6872, Longitude = 32.6396, Phone = "095-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Aswan Library", Governorate = "Aswan", City = "Aswan", Address = "El Kornish St", Latitude = 24.0889, Longitude = 32.8998, Phone = "097-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Hurghada Library", Governorate = "Red Sea", City = "Hurghada", Address = "Sheraton Road", Latitude = 27.2579, Longitude = 33.8116, Phone = "065-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Marsa Matrouh Library", Governorate = "Matrouh", City = "Marsa Matrouh", Address = "El Geish St", Latitude = 31.3529, Longitude = 27.2362, Phone = "046-1234567", WorkingHours = "09:00 AM - 08:00 PM" },
+            new() { Name = "Kharga Library", Governorate = "New Valley", City = "Kharga", Address = "Gamal Abd El Nasser St", Latitude = 25.4390, Longitude = 30.5586, Phone = "092-1234567", WorkingHours = "09:00 AM - 08:00 PM" }
+        };
+
+        await context.LibraryBranches.AddRangeAsync(branches);
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} library branches.", branches.Count);
+    }
+
+    private static async Task SeedSubscriptionsAsync(AppDbContext context, UserManager<ApplicationUser> userManager, ILogger logger)
+    {
+        var usersWithoutSubscription = await userManager.Users
+            .Where(u => !context.Subscriptions.Any(s => s.UserId == u.Id))
+            .ToListAsync();
+
+        if (usersWithoutSubscription.Any())
+        {
+            var subscriptions = usersWithoutSubscription.Select(u => new Subscription
+            {
+                UserId = u.Id,
+                Plan = SubscriptionPlanType.Free,
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddYears(10), // Free forever effectively, or could be 1 month renewed
+                Status = SubscriptionStatus.Active
+            }).ToList();
+
+            await context.Subscriptions.AddRangeAsync(subscriptions);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Seeded free subscriptions for {Count} users.", subscriptions.Count);
+        }
     }
 }

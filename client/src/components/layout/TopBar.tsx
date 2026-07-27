@@ -18,13 +18,14 @@ import { getImageUrl } from '@/utils/imageUrl';
 
 interface TopBarProps {
   handleDrawerToggle?: () => void;
+  hideSidebarToggle?: boolean;
 }
 
 /**
  * TopBar provides the global top navigation for authenticated users.
  * Includes page title, breadcrumbs, notifications, and user profile menu.
  */
-export default function TopBar({ handleDrawerToggle }: TopBarProps): React.ReactElement {
+export default function TopBar({ handleDrawerToggle, hideSidebarToggle = false }: TopBarProps): React.ReactElement {
   const theme = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export default function TopBar({ handleDrawerToggle }: TopBarProps): React.React
     >
       <Toolbar sx={{ justifyContent: 'space-between', minHeight: '48px !important', py: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {handleDrawerToggle && (
+          {!hideSidebarToggle && handleDrawerToggle && (
             <Box
               onClick={handleDrawerToggle}
               sx={{

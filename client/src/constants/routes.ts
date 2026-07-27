@@ -24,7 +24,9 @@ export const ROUTES = {
   ADMIN_BOOK_CREATE: '/app/books/new',
   ADMIN_BOOK_EDIT: (id: number | string) => `/app/books/${id}/edit`,
 
-  // Admin — Authors
+  // Admin — Subscriptions & Deliveries
+  ADMIN_SUBSCRIPTIONS: '/app/admin/subscriptions',
+  ADMIN_DELIVERIES: '/app/admin/deliveries',
   AUTHORS: '/app/authors',
   AUTHOR_CREATE: '/app/authors/new',
   AUTHOR_EDIT: (id: number | string) => `/app/authors/${id}/edit`,

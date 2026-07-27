@@ -6,16 +6,22 @@ using LibraryManagement.Domain.Enums;
 using LibraryManagement.Shared.Exceptions;
 using LibraryManagement.Shared.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using LibraryManagement.Application.DTOs.Branch;
+using LibraryManagement.Application.DTOs.Delivery;
+using LibraryManagement.Application.Utils;
 
 namespace LibraryManagement.Application.Services;
 
 public class BorrowingService : IBorrowingService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public BorrowingService(IUnitOfWork unitOfWork)
+    public BorrowingService(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
     {
         _unitOfWork = unitOfWork;
+        _userManager = userManager;
     }
 
     public async Task<ApiResponse<BorrowingDto>> BorrowBookAsync(string userId, BorrowBookRequestDto request)
@@ -27,21 +33,87 @@ public class BorrowingService : IBorrowingService
         if (book.Status != BookStatus.Available || book.AvailableCopies <= 0)
             throw new BusinessRuleException("Book is not currently available for borrowing.");
 
-        // Check if user has reached borrowing limit (e.g., 3 active borrowings)
-        var activeBorrowings = await _unitOfWork.BorrowingRecords.FindAsync(b => b.UserId == userId && b.Status == BorrowingStatus.Active);
-        if (activeBorrowings.Count() >= 3)
-            throw new BusinessRuleException("You have reached the maximum limit of active borrowings.");
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            throw new NotFoundException("User not found.");
 
-        // Check if user already has this specific book active
+        // Fetch user subscription
+        var subscription = await _unitOfWork.Subscriptions.Query()
+            .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active)
+            .OrderByDescending(s => s.EndDate)
+            .FirstOrDefaultAsync();
+
+        bool isPremium = subscription != null && subscription.Plan == SubscriptionPlanType.Premium && subscription.EndDate >= DateTime.UtcNow;
+
+        var activeBorrowings = await _unitOfWork.BorrowingRecords.FindAsync(b => b.UserId == userId && b.Status == BorrowingStatus.Active);
+        
         if (activeBorrowings.Any(b => b.BookId == request.BookId))
             throw new BusinessRuleException("You already have an active borrowing for this book.");
+
+        int dueDays = 14;
+        LibraryBranch? nearestBranch = null;
+        DeliveryRequest? deliveryRequest = null;
+        double? branchDistance = null;
+
+        if (isPremium)
+        {
+            // Premium Rules: up to 10 books active, 30 days due date, Home Delivery
+            if (activeBorrowings.Count() >= 10)
+                throw new BusinessRuleException("Premium users can have at most 10 active borrowings.");
+            
+            if (string.IsNullOrWhiteSpace(request.DeliveryAddress))
+                throw new BusinessRuleException("Delivery address is required for Premium home delivery.");
+
+            dueDays = 30;
+            deliveryRequest = new DeliveryRequest
+            {
+                UserId = userId,
+                BookId = request.BookId,
+                DeliveryAddress = request.DeliveryAddress,
+                Status = DeliveryStatus.Pending,
+                RequestedDate = DateTime.UtcNow
+            };
+        }
+        else
+        {
+            // Free Rules: Max 5 borrowings per month, Nearest Branch pickup
+            var currentMonth = DateTime.UtcNow.Month;
+            var currentYear = DateTime.UtcNow.Year;
+            var borrowingsThisMonth = await _unitOfWork.BorrowingRecords.FindAsync(b => 
+                b.UserId == userId && 
+                b.BorrowedAt.Month == currentMonth && 
+                b.BorrowedAt.Year == currentYear);
+
+            if (borrowingsThisMonth.Count() >= 5)
+                throw new BusinessRuleException("Free users can borrow a maximum of 5 books per month.");
+
+            if (request.Latitude == null || request.Longitude == null)
+                throw new BusinessRuleException("Location (Latitude/Longitude) is required to find the nearest branch for pickup.");
+
+            var branches = await _unitOfWork.LibraryBranches.Query()
+                .Where(b => b.IsActive)
+                .ToListAsync();
+
+            if (!branches.Any())
+                throw new BusinessRuleException("No active library branches found.");
+
+            nearestBranch = branches
+                .Select(b => new { Branch = b, Distance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, b.Latitude, b.Longitude) })
+                .OrderBy(b => b.Distance)
+                .FirstOrDefault()?.Branch;
+
+            if (nearestBranch != null)
+            {
+                branchDistance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, nearestBranch.Latitude, nearestBranch.Longitude);
+            }
+        }
 
         var borrowing = new BorrowingRecord
         {
             UserId = userId,
             BookId = request.BookId,
             BorrowedAt = DateTime.UtcNow,
-            DueDate = DateTime.UtcNow.AddDays(14), // 2 weeks default
+            DueDate = DateTime.UtcNow.AddDays(dueDays),
             Status = BorrowingStatus.Active
         };
 
@@ -53,18 +125,67 @@ public class BorrowingService : IBorrowingService
 
         await _unitOfWork.BorrowingRecords.AddAsync(borrowing);
         _unitOfWork.Books.Update(book);
+        
+        if (deliveryRequest != null)
+        {
+             // We add it to the context, or it's added via navigation property if we linked it. 
+             // Wait, DeliveryRequest has BorrowingRecordId, but BorrowingRecord doesn't have a collection of DeliveryRequests.
+             // We need to save borrowing first to get ID. Or just let EF handle it if we set navigation property.
+             // Wait, let's just use unit of work directly.
+        }
+
         await _unitOfWork.SaveChangesAsync();
+
+        if (deliveryRequest != null)
+        {
+            deliveryRequest.BorrowingRecordId = borrowing.Id;
+            await _unitOfWork.DeliveryRequests.AddAsync(deliveryRequest);
+            await _unitOfWork.SaveChangesAsync();
+        }
 
         var dto = new BorrowingDto
         {
             Id = borrowing.Id,
             UserId = borrowing.UserId,
+            UserName = user != null ? user.FirstName + " " + user.LastName : string.Empty,
             BookId = borrowing.BookId,
             BookTitle = book.Title,
             BorrowedAt = borrowing.BorrowedAt,
             DueDate = borrowing.DueDate,
             Status = borrowing.Status
         };
+
+        if (nearestBranch != null)
+        {
+            dto.NearestBranch = new NearestBranchDto
+            {
+                Id = nearestBranch.Id,
+                Name = nearestBranch.Name,
+                Governorate = nearestBranch.Governorate,
+                City = nearestBranch.City,
+                Address = nearestBranch.Address,
+                Latitude = nearestBranch.Latitude,
+                Longitude = nearestBranch.Longitude,
+                Phone = nearestBranch.Phone,
+                WorkingHours = nearestBranch.WorkingHours,
+                IsActive = nearestBranch.IsActive,
+                DistanceKm = Math.Round(branchDistance ?? 0, 2)
+            };
+        }
+
+        if (deliveryRequest != null)
+        {
+            dto.DeliveryRequest = new DeliveryRequestDto
+            {
+                Id = deliveryRequest.Id,
+                UserId = deliveryRequest.UserId,
+                BookId = deliveryRequest.BookId,
+                BookTitle = book.Title,
+                DeliveryAddress = deliveryRequest.DeliveryAddress,
+                Status = deliveryRequest.Status,
+                RequestedDate = deliveryRequest.RequestedDate
+            };
+        }
 
         return ApiResponse<BorrowingDto>.SuccessResponse(dto, "Book borrowed successfully.");
     }
@@ -73,6 +194,7 @@ public class BorrowingService : IBorrowingService
     {
         var borrowing = await _unitOfWork.BorrowingRecords.Query()
             .Include(b => b.Book)
+            .Include(b => b.User)
             .FirstOrDefaultAsync(b => b.Id == borrowingId);
 
         if (borrowing == null)
@@ -105,6 +227,7 @@ public class BorrowingService : IBorrowingService
         {
             Id = borrowing.Id,
             UserId = borrowing.UserId,
+            UserName = borrowing.User != null ? borrowing.User.FirstName + " " + borrowing.User.LastName : string.Empty,
             BookId = borrowing.BookId,
             BookTitle = book.Title,
             BorrowedAt = borrowing.BorrowedAt,
@@ -121,6 +244,7 @@ public class BorrowingService : IBorrowingService
     {
         var borrowings = await _unitOfWork.BorrowingRecords.Query()
             .Include(b => b.Book)
+            .Include(b => b.User)
             .Where(b => b.UserId == userId)
             .OrderByDescending(b => b.BorrowedAt)
             .ToListAsync();
@@ -129,6 +253,7 @@ public class BorrowingService : IBorrowingService
         {
             Id = b.Id,
             UserId = b.UserId,
+            UserName = b.User != null ? b.User.FirstName + " " + b.User.LastName : string.Empty,
             BookId = b.BookId,
             BookTitle = b.Book.Title,
             BorrowedAt = b.BorrowedAt,
@@ -170,6 +295,7 @@ public class BorrowingService : IBorrowingService
         {
             Id = b.Id,
             UserId = b.UserId,
+            UserName = b.User != null ? b.User.FirstName + " " + b.User.LastName : string.Empty,
             BookId = b.BookId,
             BookTitle = b.Book.Title,
             BorrowedAt = b.BorrowedAt,
@@ -187,6 +313,7 @@ public class BorrowingService : IBorrowingService
     {
         var borrowing = await _unitOfWork.BorrowingRecords.Query()
             .Include(b => b.Book)
+            .Include(b => b.User)
             .FirstOrDefaultAsync(b => b.Id == id);
 
         if (borrowing == null)
@@ -196,6 +323,7 @@ public class BorrowingService : IBorrowingService
         {
             Id = borrowing.Id,
             UserId = borrowing.UserId,
+            UserName = borrowing.User != null ? borrowing.User.FirstName + " " + borrowing.User.LastName : string.Empty,
             BookId = borrowing.BookId,
             BookTitle = borrowing.Book.Title,
             BorrowedAt = borrowing.BorrowedAt,

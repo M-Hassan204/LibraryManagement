@@ -40,6 +40,18 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     /// <summary>Gets or sets the EmailVerificationTokens table.</summary>
     public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
 
+    /// <summary>Gets or sets the Subscriptions table.</summary>
+    public DbSet<Subscription> Subscriptions { get; set; }
+
+    /// <summary>Gets or sets the LibraryBranches table.</summary>
+    public DbSet<LibraryBranch> LibraryBranches { get; set; }
+
+    /// <summary>Gets or sets the DeliveryRequests table.</summary>
+    public DbSet<DeliveryRequest> DeliveryRequests { get; set; }
+
+    /// <summary>Gets or sets the DailyReadingLimits table.</summary>
+    public DbSet<DailyReadingLimit> DailyReadingLimits { get; set; }
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -63,5 +75,9 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Book>().HasQueryFilter(b => !b.IsDeleted);
         builder.Entity<BorrowingRecord>().HasQueryFilter(br => !br.IsDeleted);
         builder.Entity<ApplicationUser>().HasQueryFilter(u => !u.IsDeleted);
+        builder.Entity<Subscription>().HasQueryFilter(s => !s.IsDeleted);
+        builder.Entity<LibraryBranch>().HasQueryFilter(lb => !lb.IsDeleted);
+        builder.Entity<DeliveryRequest>().HasQueryFilter(dr => !dr.IsDeleted);
+        builder.Entity<DailyReadingLimit>().HasQueryFilter(dl => !dl.IsDeleted);
     }
 }

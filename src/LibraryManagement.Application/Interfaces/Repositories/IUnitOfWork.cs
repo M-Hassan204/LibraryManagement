@@ -29,7 +29,12 @@ public interface IUnitOfWork : IAsyncDisposable
 
     /// <summary>Gets the repository for <see cref="EmailVerificationToken"/> entities.</summary>
     IGenericRepository<EmailVerificationToken> EmailVerificationTokens { get; }
-
+    
+    IGenericRepository<Subscription> Subscriptions { get; }
+    IGenericRepository<LibraryBranch> LibraryBranches { get; }
+    IGenericRepository<DeliveryRequest> DeliveryRequests { get; }
+    IGenericRepository<DailyReadingLimit> DailyReadingLimits { get; }
+    
     /// <summary>
     /// Commits all pending changes tracked by this unit of work to the database.
     /// </summary>

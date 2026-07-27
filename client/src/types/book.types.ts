@@ -37,8 +37,27 @@ export interface BookDto {
   category?: CategoryDto;
   authorId: number;
   author?: AuthorDto;
+  authorName?: string;
+  categoryName?: string;
   createdAt: string;
   updatedAt?: string;
+  publisher?: string;
+  language?: string;
+  pages?: number;
+}
+
+export interface BookMetadata {
+  title: string;
+  description?: string;
+  publisher?: string;
+  publishedYear?: number;
+  pages?: number;
+  coverImageUrl?: string;
+  language?: string;
+  isbn10?: string;
+  isbn13?: string;
+  categories: string[];
+  authors: string[];
 }
 
 // Mirrors: LibraryManagement.Application.DTOs.Book.CreateBookRequestDto
@@ -50,6 +69,9 @@ export interface CreateBookRequestDto {
   publishedYear: number;
   categoryId: number;
   authorId: number;
+  publisher?: string;
+  language?: string;
+  pages?: number;
 }
 
 // Mirrors: LibraryManagement.Application.DTOs.Book.UpdateBookRequestDto
@@ -63,4 +85,7 @@ export interface UpdateBookRequestDto {
   status: BookStatus;
   categoryId: number;
   authorId: number;
+  publisher?: string;
+  language?: string;
+  pages?: number;
 }

@@ -10,6 +10,7 @@ export enum BorrowingStatus {
 export interface BorrowingDto {
   id: number;
   userId: string;
+  userName: string;
   bookId: number;
   bookTitle: string;
   borrowedAt: string;
@@ -17,11 +18,21 @@ export interface BorrowingDto {
   returnedAt?: string;
   status: BorrowingStatus;
   notes?: string;
+  homeDelivery: boolean;
+  deliveryId?: number;
+  deliveryStatus?: number; // Adjust enum if defined
+  deliveryAddress?: string;
+  branchId?: number;
+  branchName?: string;
 }
 
 // Mirrors: LibraryManagement.Application.DTOs.Borrowing.BorrowBookRequestDto
 export interface BorrowBookRequestDto {
   bookId: number;
+  homeDelivery: boolean;
+  latitude?: number;
+  longitude?: number;
+  deliveryAddress?: string;
 }
 
 // Mirrors: LibraryManagement.Application.DTOs.Borrowing.ReturnBookRequestDto

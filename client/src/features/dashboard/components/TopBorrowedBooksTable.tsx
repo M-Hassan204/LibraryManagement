@@ -101,7 +101,7 @@ export function TopBorrowedBooksTable({ books, isLoading }: TopBorrowedBooksTabl
               </TableCell>
               <TableCell>
                 <Typography variant="body2" color="text.secondary">
-                  N/A
+                  {book.authorName || 'N/A'}
                 </Typography>
               </TableCell>
               <TableCell align="right">

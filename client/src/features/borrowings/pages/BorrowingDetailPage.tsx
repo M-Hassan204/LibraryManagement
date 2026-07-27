@@ -159,9 +159,8 @@ export default function BorrowingDetailPage(): React.ReactElement {
               <Button 
                 variant="outlined" 
                 startIcon={<PersonIcon />}
-                // We don't have a user details page yet, but could add one
               >
-                User ID: {borrowing.userId}
+                User: {borrowing.userName || borrowing.userId}
               </Button>
             </Box>
           </Grid>

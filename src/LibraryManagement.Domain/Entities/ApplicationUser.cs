@@ -73,4 +73,19 @@ public class ApplicationUser : IdentityUser
     /// Gets or sets the collection of borrowing records for this user.
     /// </summary>
     public ICollection<BorrowingRecord> BorrowingRecords { get; set; } = new List<BorrowingRecord>();
+
+    /// <summary>
+    /// Gets or sets the collection of subscriptions for this user.
+    /// </summary>
+    public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+
+    /// <summary>
+    /// Gets or sets the collection of delivery requests for this user.
+    /// </summary>
+    public ICollection<DeliveryRequest> DeliveryRequests { get; set; } = new List<DeliveryRequest>();
+
+    /// <summary>
+    /// Gets or sets the daily reading limits tracked for this user.
+    /// </summary>
+    public ICollection<DailyReadingLimit> DailyReadingLimits { get; set; } = new List<DailyReadingLimit>();
 }

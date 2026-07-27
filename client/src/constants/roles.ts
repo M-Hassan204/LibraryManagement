@@ -2,7 +2,9 @@
 
 export const APP_ROLES = {
   Admin: 'Admin',
-  Student: 'Student',
+  Student: 'Student', // Legacy
+  Librarian: 'Librarian',
+  User: 'User',
 } as const;
 
 export type AppRole = (typeof APP_ROLES)[keyof typeof APP_ROLES];

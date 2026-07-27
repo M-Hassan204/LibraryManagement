@@ -20,9 +20,11 @@ import {
   Delete as DeleteIcon,
   MenuBook as BorrowIcon,
   KeyboardReturn as ReturnIcon,
+  ImportContacts as ReadIcon,
 } from '@mui/icons-material';
 import { useBook, useDeleteBook } from '../hooks/useBooks';
 import { useBorrowBook } from '../../borrowings/hooks/useBorrowings';
+import { useReadBook } from '../../public/hooks/useReading';
 import { BookStatus } from '@/types/book.types';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
@@ -39,6 +41,7 @@ export default function BookDetailPage(): React.ReactElement {
   
   const deleteMutation = useDeleteBook();
   const borrowMutation = useBorrowBook();
+  const readMutation = useReadBook();
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
@@ -59,11 +62,15 @@ export default function BookDetailPage(): React.ReactElement {
 
   const handleBorrow = async () => {
     try {
-      await borrowMutation.mutateAsync({ bookId });
+      await borrowMutation.mutateAsync({ bookId, homeDelivery: false });
       setSnackbar({ open: true, message: 'Book borrowed successfully', severity: 'success' });
     } catch (err: any) {
       setSnackbar({ open: true, message: err.message || 'Failed to borrow book', severity: 'error' });
     }
+  };
+
+  const handleReadOnline = () => {
+    navigate(`/app/books/${bookId}/read`);
   };
 
   const getStatusColor = (status: BookStatus) => {
@@ -186,6 +193,16 @@ export default function BookDetailPage(): React.ReactElement {
               >
                 {borrowMutation.isPending ? 'Borrowing...' : 'Borrow Book'}
               </Button>
+              <Button 
+                variant="outlined" 
+                color="secondary" 
+                fullWidth
+                startIcon={<ReadIcon />}
+                disabled={readMutation.isPending}
+                onClick={handleReadOnline}
+              >
+                {readMutation.isPending ? 'Loading...' : 'Read Online'}
+              </Button>
               <Tooltip title="To return a book, please go to My Borrowings">
                 <span>
                   <Button 
@@ -231,7 +248,7 @@ export default function BookDetailPage(): React.ReactElement {
                 {book.title}
               </Typography>
               <Typography variant="h5" color="text.secondary" gutterBottom>
-                by {book.author?.name}
+                by {book.authorName || book.author?.name}
               </Typography>
             </Box>
 
@@ -242,7 +259,7 @@ export default function BookDetailPage(): React.ReactElement {
                 variant="filled"
                 sx={{ fontWeight: 'bold' }}
               />
-              <Chip label={book.category?.name} variant="outlined" />
+              <Chip label={book.categoryName || book.category?.name} variant="outlined" />
               <Chip label={`Published: ${book.publishedYear}`} variant="outlined" />
             </Box>
 

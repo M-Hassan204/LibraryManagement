@@ -200,8 +200,8 @@ export default function AdminBooksPage(): React.ReactElement {
                 pagedBooks.items.map((book) => (
                   <TableRow key={book.id} hover>
                     <TableCell sx={{ fontWeight: 500 }}>{book.title}</TableCell>
-                    <TableCell>{book.author?.name}</TableCell>
-                    <TableCell>{book.category?.name}</TableCell>
+                    <TableCell>{book.authorName || book.author?.name}</TableCell>
+                    <TableCell>{book.categoryName || book.category?.name}</TableCell>
                     <TableCell>{book.isbn}</TableCell>
                     <TableCell>
                       <Chip

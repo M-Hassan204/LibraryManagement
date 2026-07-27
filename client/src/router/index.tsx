@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ReactElement } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import { AdminRoute, ProtectedRoute, PublicRoute } from './guards';
+import { AdminRoute, LibrarianRoute, MemberRoute, ProtectedRoute, PublicRoute } from './guards';
 
 // ─── Lazy-loaded pages ────────────────────────────────────────────────────────
 // Every page is lazy-loaded for code splitting.
@@ -16,13 +16,18 @@ const VerifyOtpPage = lazy(() => import('@/features/auth/pages/VerifyOtpPage'));
 // Public catalogue
 const BooksPublicPage = lazy(() => import('@/features/books/pages/BooksPublicPage'));
 const BookDetailPage = lazy(() => import('@/features/books/pages/BookDetailPage'));
+const BookReaderPage = lazy(() => import('@/features/books/pages/BookReaderPage'));
 
 // App shell layout (authenticated wrapper)
 const AppShell = lazy(() => import('@/components/layout/AppShell'));
+
 const HomePage = lazy(() => import('@/features/dashboard/pages/HomePage'));
+const LibrarianDashboardPage = lazy(() => import('@/features/dashboard/pages/LibrarianDashboardPage'));
+const MemberHomePage = lazy(() => import('@/features/dashboard/pages/MemberHomePage'));
 
 // Admin pages
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
+const AdminSubscriptionsPage = lazy(() => import('@/features/subscriptions/pages/AdminSubscriptionsPage'));
 const AdminBooksPage = lazy(() => import('@/features/books/pages/AdminBooksPage'));
 const CreateBookPage = lazy(() => import('@/features/books/pages/CreateBookPage'));
 const EditBookPage = lazy(() => import('@/features/books/pages/EditBookPage'));
@@ -126,7 +131,7 @@ export const router = createBrowserRouter([
     ),
   },
 
-  // ── Authenticated app routes (nested under AppShell layout) ───────────────
+  // ── Authenticated app routes (nested under AppShell) ──────────────────────
   {
     path: ROUTES.APP,
     element: (
@@ -152,6 +157,40 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      
+      // Member Routes
+      {
+        path: '/app/member/home',
+        element: (
+          <MemberRoute>
+            <Suspense fallback={<PageLoader />}>
+              <MemberHomePage />
+            </Suspense>
+          </MemberRoute>
+        ),
+      },
+      
+      // Shared authenticated routes
+      {
+        path: '/app/books/:id/read',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <BookReaderPage />
+          </Suspense>
+        ),
+      },
+
+      // Librarian routes
+      {
+        path: '/app/librarian/dashboard',
+        element: (
+          <LibrarianRoute>
+            <Suspense fallback={<PageLoader />}>
+              <LibrarianDashboardPage />
+            </Suspense>
+          </LibrarianRoute>
+        ),
+      },
 
       // Admin-only routes
       {
@@ -160,6 +199,16 @@ export const router = createBrowserRouter([
           <AdminRoute>
             <Suspense fallback={<PageLoader />}>
               <DashboardPage />
+            </Suspense>
+          </AdminRoute>
+        ),
+      },
+      {
+        path: 'admin/subscriptions',
+        element: (
+          <AdminRoute>
+            <Suspense fallback={<PageLoader />}>
+              <AdminSubscriptionsPage />
             </Suspense>
           </AdminRoute>
         ),

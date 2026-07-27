@@ -136,7 +136,7 @@ export default function AllBorrowingsPage(): React.ReactElement {
             <TableHead>
               <TableRow>
                 <TableCell>Book Title</TableCell>
-                <TableCell>User ID</TableCell>
+                <TableCell>User</TableCell>
                 <TableCell>Borrowed At</TableCell>
                 <TableCell>Due Date</TableCell>
                 <TableCell>Returned At</TableCell>
@@ -178,7 +178,7 @@ export default function AllBorrowingsPage(): React.ReactElement {
                 filteredBorrowings.map((borrowing) => (
                   <TableRow key={borrowing.id} hover>
                     <TableCell sx={{ fontWeight: 500 }}>{borrowing.bookTitle}</TableCell>
-                    <TableCell>{borrowing.userId}</TableCell>
+                    <TableCell>{borrowing.userName || borrowing.userId}</TableCell>
                     <TableCell>{new Date(borrowing.borrowedAt).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(borrowing.dueDate).toLocaleDateString()}</TableCell>
                     <TableCell>

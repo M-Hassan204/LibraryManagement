@@ -13,15 +13,18 @@ namespace LibraryManagement.Application.Services;
 public class AdminUserService : IAdminUserService
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IMapper _mapper;
     private readonly ILogger<AdminUserService> _logger;
 
     public AdminUserService(
         UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
         IMapper mapper,
         ILogger<AdminUserService> logger)
     {
         _userManager = userManager;
+        _roleManager = roleManager;
         _mapper = mapper;
         _logger = logger;
     }
@@ -54,7 +57,6 @@ public class AdminUserService : IAdminUserService
         // For efficiency, we will execute the query and then filter by role if provided.
         // Wait, UserManager doesn't easily expose roles in IQueryable. Let's do it efficiently:
         
-        List<ApplicationUser> usersList;
         if (!string.IsNullOrWhiteSpace(parameters.Role))
         {
             var usersInRole = await _userManager.GetUsersInRoleAsync(parameters.Role);
@@ -290,5 +292,53 @@ public class AdminUserService : IAdminUserService
 
         _logger.LogInformation("Admin removed role {Role} from user {UserId}", roleName, user.Id);
         return ApiResponse.Ok($"Role '{roleName}' removed successfully.");
+    }
+
+    public async Task<ApiResponse> UpdateRolesAsync(string id, UpdateRolesRequestDto request, string currentUserId)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        var requestedRoles = request.Roles ?? new List<string>();
+
+        // Ensure roles exist
+        foreach (var role in requestedRoles)
+        {
+            if (!await _roleManager.RoleExistsAsync(role))
+                throw new ValidationException(new List<string> { $"Role '{role}' does not exist." });
+        }
+
+        // Handle Admin role removal protection
+        if (currentRoles.Contains("Admin", StringComparer.OrdinalIgnoreCase) && !requestedRoles.Contains("Admin", StringComparer.OrdinalIgnoreCase))
+        {
+            if (id == currentUserId)
+                throw new ValidationException(new List<string> { "You cannot remove the administrator role from your own account." });
+
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            if (admins.Count <= 1)
+                throw new ValidationException(new List<string> { "You cannot remove the last administrator role in the system." });
+        }
+
+        var rolesToAdd = requestedRoles.Except(currentRoles, StringComparer.OrdinalIgnoreCase).ToList();
+        var rolesToRemove = currentRoles.Except(requestedRoles, StringComparer.OrdinalIgnoreCase).ToList();
+
+        if (rolesToAdd.Any())
+        {
+            var addResult = await _userManager.AddToRolesAsync(user, rolesToAdd);
+            if (!addResult.Succeeded)
+                throw new ValidationException(addResult.Errors.Select(e => e.Description).ToList());
+        }
+
+        if (rolesToRemove.Any())
+        {
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+            if (!removeResult.Succeeded)
+                throw new ValidationException(removeResult.Errors.Select(e => e.Description).ToList());
+        }
+
+        _logger.LogInformation("Admin updated roles for user {UserId}. Added: {Added}, Removed: {Removed}", user.Id, string.Join(",", rolesToAdd), string.Join(",", rolesToRemove));
+        return ApiResponse.Ok("Roles updated successfully.");
     }
 }

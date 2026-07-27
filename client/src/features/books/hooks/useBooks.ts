@@ -5,6 +5,7 @@ import type { CreateBookRequestDto, UpdateBookRequestDto } from '@/types/book.ty
 
 export const BOOKS_QUERY_KEY = 'books';
 export const BOOK_QUERY_KEY = 'book';
+export const BOOK_METADATA_QUERY_KEY = 'book-metadata';
 
 export function useBooks(params: ResourceParameters) {
   return useQuery({
@@ -96,5 +97,21 @@ export function useUploadBookCover(id: number) {
       queryClient.invalidateQueries({ queryKey: [BOOKS_QUERY_KEY] });
       queryClient.invalidateQueries({ queryKey: [BOOK_QUERY_KEY, id] });
     },
+  });
+}
+
+export function useBookMetadata(params: { isbn?: string; title?: string; author?: string }, enabled: boolean = false) {
+  return useQuery({
+    queryKey: [BOOK_METADATA_QUERY_KEY, params],
+    queryFn: async () => {
+      const response = await booksApi.fetchMetadata(params);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch book metadata');
+      }
+      return response.data;
+    },
+    enabled,
+    retry: false, // Don't retry if not found
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 }

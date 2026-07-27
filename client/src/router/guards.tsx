@@ -63,6 +63,44 @@ export function AdminRoute({ children }: AdminRouteProps): ReactElement {
   return <>{children}</>;
 }
 
+export function LibrarianRoute({ children }: AdminRouteProps): ReactElement {
+  const { isAuthenticated, isInitializing, user } = useAuth();
+  const location = useLocation();
+
+  if (isInitializing) {
+    return <></>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
+  }
+
+  if (!user?.roles.includes(APP_ROLES.Librarian) && !user?.roles.includes(APP_ROLES.Admin)) {
+    return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+export function MemberRoute({ children }: AdminRouteProps): ReactElement {
+  const { isAuthenticated, isInitializing, user } = useAuth();
+  const location = useLocation();
+
+  if (isInitializing) {
+    return <></>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
+  }
+
+  if (!user?.roles.includes(APP_ROLES.User) && !user?.roles.includes(APP_ROLES.Admin)) {
+    return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
+  }
+
+  return <>{children}</>;
+}
+
 interface PublicRouteProps {
   children: ReactNode;
 }
@@ -73,16 +111,21 @@ interface PublicRouteProps {
  * so they don't land on the login page while already logged in.
  */
 export function PublicRoute({ children }: PublicRouteProps): ReactElement {
-  const { isAuthenticated, isAdmin, isInitializing } = useAuth();
+  const { isAuthenticated, user, isInitializing } = useAuth();
 
   if (isInitializing) {
     return <></>;
   }
 
   if (isAuthenticated) {
+    let target: string = ROUTES.BOOKS;
+    if (user?.roles.includes(APP_ROLES.Admin)) target = ROUTES.DASHBOARD;
+    else if (user?.roles.includes(APP_ROLES.Librarian)) target = '/app/librarian/dashboard';
+    else if (user?.roles.includes(APP_ROLES.User)) target = '/app/member/home';
+
     return (
       <Navigate
-        to={isAdmin ? ROUTES.DASHBOARD : ROUTES.BOOKS}
+        to={target}
         replace
       />
     );

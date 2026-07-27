@@ -13,13 +13,38 @@ export default function CreateBookPage(): React.ReactElement {
   const handleSubmit = async (data: any, file: File | null) => {
     setErrorMsg(null);
     try {
+      let finalAuthorId = data.authorId;
+      let finalCategoryId = data.categoryId;
+
+      // Handle dynamic author creation
+      if (typeof finalAuthorId === 'string') {
+        const { authorsApi } = await import('@/api/authors.api');
+        const res = await authorsApi.create({ name: finalAuthorId, biography: '' });
+        if (res.success && res.data) {
+          finalAuthorId = res.data.id;
+        } else {
+          throw new Error('Failed to create author automatically.');
+        }
+      }
+
+      // Handle dynamic category creation
+      if (typeof finalCategoryId === 'string') {
+        const { categoriesApi } = await import('@/api/categories.api');
+        const res = await categoriesApi.create({ name: finalCategoryId, description: '' });
+        if (res.success && res.data) {
+          finalCategoryId = res.data.id;
+        } else {
+          throw new Error('Failed to create category automatically.');
+        }
+      }
+
       const newBook = await createMutation.mutateAsync({
         title: data.title,
         isbn: data.isbn,
         description: data.description,
         publishedYear: data.publishedYear,
-        categoryId: data.categoryId,
-        authorId: data.authorId,
+        categoryId: finalCategoryId,
+        authorId: finalAuthorId,
         coverImageUrl: data.coverImageUrl,
       });
 

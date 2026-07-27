@@ -21,6 +21,11 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<RefreshToken>? _refreshTokens;
     private IGenericRepository<OtpCode>? _otpCodes;
     private IGenericRepository<EmailVerificationToken>? _emailVerificationTokens;
+    
+    private IGenericRepository<Subscription>? _subscriptions;
+    private IGenericRepository<LibraryBranch>? _libraryBranches;
+    private IGenericRepository<DeliveryRequest>? _deliveryRequests;
+    private IGenericRepository<DailyReadingLimit>? _dailyReadingLimits;
 
     /// <summary>
     /// Initializes a new instance of <see cref="UnitOfWork"/>.
@@ -58,6 +63,18 @@ public class UnitOfWork : IUnitOfWork
     /// <inheritdoc />
     public IGenericRepository<EmailVerificationToken> EmailVerificationTokens
         => _emailVerificationTokens ??= new GenericRepository<EmailVerificationToken>(_context);
+        
+    public IGenericRepository<Subscription> Subscriptions
+        => _subscriptions ??= new GenericRepository<Subscription>(_context);
+        
+    public IGenericRepository<LibraryBranch> LibraryBranches
+        => _libraryBranches ??= new GenericRepository<LibraryBranch>(_context);
+        
+    public IGenericRepository<DeliveryRequest> DeliveryRequests
+        => _deliveryRequests ??= new GenericRepository<DeliveryRequest>(_context);
+        
+    public IGenericRepository<DailyReadingLimit> DailyReadingLimits
+        => _dailyReadingLimits ??= new GenericRepository<DailyReadingLimit>(_context);
 
     /// <inheritdoc />
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

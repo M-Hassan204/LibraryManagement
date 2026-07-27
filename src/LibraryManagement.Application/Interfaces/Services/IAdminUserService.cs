@@ -15,4 +15,5 @@ public interface IAdminUserService
     Task<ApiResponse> DeactivateUserAsync(string id, string currentUserId);
     Task<ApiResponse> AssignRoleAsync(string id, AssignRoleRequestDto request);
     Task<ApiResponse> RemoveRoleAsync(string id, string roleName, string currentUserId);
+    Task<ApiResponse> UpdateRolesAsync(string id, UpdateRolesRequestDto request, string currentUserId);
 }

@@ -171,7 +171,7 @@ export default function HomePage(): React.ReactElement {
                       {book.title}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" noWrap>
-                      {book.author?.name}
+                      {book.authorName || book.author?.name}
                     </Typography>
                   </CardContent>
                 </CardActionArea>

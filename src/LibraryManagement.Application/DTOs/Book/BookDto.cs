@@ -16,10 +16,16 @@ public class BookDto
     
     public int CategoryId { get; set; }
     public CategoryDto? Category { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
     
     public int AuthorId { get; set; }
     public AuthorDto? Author { get; set; }
+    public string AuthorName { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    public string? Publisher { get; set; }
+    public string? Language { get; set; }
+    public int? Pages { get; set; }
 }

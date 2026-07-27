@@ -10,10 +10,12 @@ namespace LibraryManagement.API.Controllers;
 public class BookController : BaseApiController
 {
     private readonly IBookService _bookService;
+    private readonly IBookMetadataService _bookMetadataService;
 
-    public BookController(IBookService bookService)
+    public BookController(IBookService bookService, IBookMetadataService bookMetadataService)
     {
         _bookService = bookService;
+        _bookMetadataService = bookMetadataService;
     }
 
     [HttpGet]
@@ -71,5 +73,12 @@ public class BookController : BaseApiController
 
         using var stream = file.OpenReadStream();
         return Ok(await _bookService.UploadCoverImageAsync(id, stream, file.FileName));
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpGet("metadata")]
+    public async Task<ActionResult<ApiResponse<BookMetadataDto>>> GetMetadata([FromQuery] FetchBookMetadataRequestDto request)
+    {
+        return Ok(await _bookMetadataService.FetchMetadataAsync(request));
     }
 }

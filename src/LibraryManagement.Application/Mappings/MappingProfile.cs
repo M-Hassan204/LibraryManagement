@@ -19,12 +19,17 @@ public class MappingProfile : Profile
         CreateMap<DTOs.Category.UpdateCategoryRequestDto, Domain.Entities.Category>();
 
         // Author Mappings
-        CreateMap<Domain.Entities.Author, DTOs.Author.AuthorDto>().ReverseMap();
+        CreateMap<Domain.Entities.Author, DTOs.Author.AuthorDto>()
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FullName))
+            .ReverseMap();
         CreateMap<DTOs.Author.CreateAuthorRequestDto, Domain.Entities.Author>();
         CreateMap<DTOs.Author.UpdateAuthorRequestDto, Domain.Entities.Author>();
 
         // Book Mappings
-        CreateMap<Domain.Entities.Book, DTOs.Book.BookDto>().ReverseMap();
+        CreateMap<Domain.Entities.Book, DTOs.Book.BookDto>()
+            .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author != null ? src.Author.FullName : string.Empty))
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : string.Empty))
+            .ReverseMap();
         CreateMap<DTOs.Book.CreateBookRequestDto, Domain.Entities.Book>();
         CreateMap<DTOs.Book.UpdateBookRequestDto, Domain.Entities.Book>();
 

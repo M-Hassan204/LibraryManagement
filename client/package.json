@@ -22,6 +22,7 @@
     "react-dom": "^19.2.7",
     "react-easy-crop": "^6.2.3",
     "react-hook-form": "^7.82.0",
+    "react-pdf": "^10.4.1",
     "react-router-dom": "^7.18.1",
     "zod": "^4.4.3"
   },

@@ -35,6 +35,13 @@ public static class ApplicationServiceExtensions
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IBorrowingService, LibraryManagement.Application.Services.BorrowingService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IImageService, LibraryManagement.Application.Services.ImageService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IDashboardService, LibraryManagement.Application.Services.DashboardService>();
+        services.AddScoped<LibraryManagement.Application.Interfaces.Services.IBookMetadataService, LibraryManagement.Application.Services.BookMetadataService>();
+        services.AddScoped<LibraryManagement.Application.Interfaces.Services.ISubscriptionService, LibraryManagement.Application.Services.SubscriptionService>();
+        services.AddScoped<LibraryManagement.Application.Interfaces.Services.IReadingService, LibraryManagement.Application.Services.ReadingService>();
+        services.AddScoped<LibraryManagement.Application.Interfaces.Services.IDeliveryService, LibraryManagement.Application.Services.DeliveryService>();
+
+        // Register HttpClient for external API calls
+        services.AddHttpClient();
 
         return services;
     }

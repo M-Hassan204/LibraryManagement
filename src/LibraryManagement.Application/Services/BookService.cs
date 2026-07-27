@@ -92,6 +92,9 @@ public class BookService : IBookService
         var book = _mapper.Map<Book>(request);
         book.CreatedAt = DateTime.UtcNow;
 
+        book.Author = author;
+        book.Category = category;
+
         await _unitOfWork.Books.AddAsync(book);
         await _unitOfWork.SaveChangesAsync();
 
@@ -114,6 +117,9 @@ public class BookService : IBookService
 
         _mapper.Map(request, book);
         book.UpdatedAt = DateTime.UtcNow;
+        
+        book.Author = author;
+        book.Category = category;
 
         _unitOfWork.Books.Update(book);
         await _unitOfWork.SaveChangesAsync();

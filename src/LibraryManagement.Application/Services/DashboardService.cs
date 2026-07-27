@@ -33,11 +33,12 @@ public class DashboardService : IDashboardService
             .CountAsync(b => b.Status == BorrowingStatus.Active && b.DueDate < DateTime.UtcNow);
 
         var topBorrowedBooks = await _unitOfWork.BorrowingRecords.Query()
-            .GroupBy(b => new { b.BookId, b.Book.Title })
+            .GroupBy(b => new { b.BookId, b.Book.Title, b.Book.Author.FirstName, b.Book.Author.LastName })
             .Select(g => new TopBookDto
             {
                 BookId = g.Key.BookId,
                 Title = g.Key.Title,
+                AuthorName = g.Key.FirstName + " " + g.Key.LastName,
                 BorrowCount = g.Count()
             })
             .OrderByDescending(t => t.BorrowCount)
