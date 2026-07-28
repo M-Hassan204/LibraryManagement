@@ -38,64 +38,6 @@ public class SubscriptionService : ISubscriptionService
         return ApiResponse<SubscriptionDto>.SuccessResponse(dto, "Subscription retrieved successfully.");
     }
 
-    public async Task<ApiResponse<SubscriptionDto>> UpgradeToPremiumAsync(string userId)
-    {
-        var pendingSubscription = await _unitOfWork.Subscriptions.Query()
-            .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Pending)
-            .FirstOrDefaultAsync();
-
-        if (pendingSubscription != null)
-            throw new ValidationException("You already have a pending upgrade request.");
-
-        var newSubscription = new Subscription
-        {
-            UserId = userId,
-            Plan = SubscriptionPlanType.Premium,
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddMonths(1),
-            Status = SubscriptionStatus.Pending
-        };
-
-        await _unitOfWork.Subscriptions.AddAsync(newSubscription);
-        await _unitOfWork.SaveChangesAsync();
-
-        newSubscription.User = await _userManager.FindByIdAsync(userId) ?? throw new NotFoundException("User not found.");
-
-        var dto = MapToDto(newSubscription);
-        return ApiResponse<SubscriptionDto>.SuccessResponse(dto, "Upgrade request submitted successfully.");
-    }
-
-    public async Task<ApiResponse<SubscriptionDto>> CancelSubscriptionAsync(string userId)
-    {
-        var subscription = await _unitOfWork.Subscriptions.Query()
-            .Include(s => s.User)
-            .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active)
-            .FirstOrDefaultAsync();
-
-        if (subscription == null)
-            throw new NotFoundException("Active subscription not found.");
-
-        subscription.Status = SubscriptionStatus.Canceled;
-        _unitOfWork.Subscriptions.Update(subscription);
-
-        // Fallback to Free Plan
-        var freeSubscription = new Subscription
-        {
-            UserId = userId,
-            Plan = SubscriptionPlanType.Free,
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddYears(100),
-            Status = SubscriptionStatus.Active
-        };
-
-        await _unitOfWork.Subscriptions.AddAsync(freeSubscription);
-        await _unitOfWork.SaveChangesAsync();
-
-        freeSubscription.User = subscription.User;
-
-        var dto = MapToDto(freeSubscription);
-        return ApiResponse<SubscriptionDto>.SuccessResponse(dto, "Subscription cancelled and reverted to Free plan.");
-    }
 
     public async Task<ApiResponse<PagedResult<SubscriptionDto>>> GetAllSubscriptionsAsync(ResourceParameters parameters)
     {

@@ -42,7 +42,7 @@ export const ROUTES = {
   // Admin — Users
   USERS: '/app/users',
 
-  // Student
+  // Member
   MY_BORROWINGS: '/app/my-borrowings',
 
   // Shared (any authenticated user)

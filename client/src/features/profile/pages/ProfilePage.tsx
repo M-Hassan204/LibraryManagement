@@ -22,7 +22,7 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '@/context/AuthContext';
 import { APP_ROLES } from '@/constants/roles';
-import { useSubscription, useUpgradeSubscription, useCancelSubscription } from '../../public/hooks/useSubscriptions';
+import { useSubscription } from '../../public/hooks/useSubscriptions';
 import { SubscriptionPlan, SubscriptionStatus } from '@/types/subscription.types';
 
 import ProfileImageUploader from '../components/ProfileImageUploader';
@@ -49,8 +49,6 @@ export default function ProfilePage(): React.ReactElement {
   const { isAdmin } = useAuth();
   
   const { data: subscriptionResponse } = useSubscription(profile?.id);
-  const upgradeMutation = useUpgradeSubscription();
-  const cancelMutation = useCancelSubscription();
   
   const [tabValue, setTabValue] = useState(0);
 
@@ -131,13 +129,7 @@ export default function ProfilePage(): React.ReactElement {
     }
   };
 
-  const handleUpgrade = async () => {
-    await upgradeMutation.mutateAsync();
-  };
 
-  const handleCancel = async () => {
-    await cancelMutation.mutateAsync();
-  };
 
   const sub = subscriptionResponse?.data;
 
@@ -360,36 +352,6 @@ export default function ProfilePage(): React.ReactElement {
                       <Typography variant="h6" gutterBottom>Current Plan: {SubscriptionPlan[sub.plan]}</Typography>
                       <Typography variant="body1">Status: {SubscriptionStatus[sub.status]}</Typography>
                       <Typography variant="body1">Valid until: {new Date(sub.endDate).toLocaleDateString()}</Typography>
-                      
-                      {sub.plan === SubscriptionPlan.Free && sub.status === SubscriptionStatus.Active && (
-                        <Button 
-                          variant="contained" 
-                          color="primary" 
-                          sx={{ mt: 3 }}
-                          onClick={handleUpgrade}
-                          disabled={upgradeMutation.isPending}
-                        >
-                          Upgrade to Premium
-                        </Button>
-                      )}
-                      
-                      {sub.status === SubscriptionStatus.Pending && (
-                        <Alert severity="info" sx={{ mt: 3 }}>
-                          Your Premium upgrade request is pending approval by an admin.
-                        </Alert>
-                      )}
-                      
-                      {sub.plan === SubscriptionPlan.Premium && sub.status === SubscriptionStatus.Active && (
-                        <Button 
-                          variant="outlined" 
-                          color="error" 
-                          sx={{ mt: 3 }}
-                          onClick={handleCancel}
-                          disabled={cancelMutation.isPending}
-                        >
-                          Cancel Subscription
-                        </Button>
-                      )}
                     </Box>
                   ) : (
                     <CircularProgress />

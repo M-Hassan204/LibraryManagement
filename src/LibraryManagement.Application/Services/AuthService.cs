@@ -3,6 +3,7 @@ using LibraryManagement.Application.Interfaces.Repositories;
 using LibraryManagement.Application.Interfaces.Services;
 using LibraryManagement.Domain.Constants;
 using LibraryManagement.Domain.Entities;
+using LibraryManagement.Domain.Enums;
 using LibraryManagement.Shared.Exceptions;
 using LibraryManagement.Shared.Models;
 using Microsoft.AspNetCore.Identity;
@@ -56,7 +57,18 @@ public class AuthService : IAuthService
             throw new ValidationException(errors);
         }
 
-        await _userManager.AddToRoleAsync(user, AppRoles.Student);
+        await _userManager.AddToRoleAsync(user, AppRoles.Member);
+
+        // Assign default 'None' subscription to new members
+        var defaultSubscription = new Subscription
+        {
+            UserId = user.Id,
+            Plan = SubscriptionPlanType.None,
+            Status = SubscriptionStatus.Active,
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddYears(100) // Effectively permanent until upgraded
+        };
+        await _unitOfWork.Subscriptions.AddAsync(defaultSubscription);
 
         // Generate email verification token
         var token = Guid.NewGuid().ToString("N");
@@ -92,7 +104,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
-            Roles = new List<string> { AppRoles.Student }
+            Roles = new List<string> { AppRoles.Member }
         }, message);
     }
 

@@ -94,7 +94,7 @@ export function MemberRoute({ children }: AdminRouteProps): ReactElement {
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
-  if (!user?.roles.includes(APP_ROLES.User) && !user?.roles.includes(APP_ROLES.Admin)) {
+  if (!user?.roles.includes(APP_ROLES.Member) && !user?.roles.includes(APP_ROLES.Admin)) {
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }
 
@@ -121,7 +121,7 @@ export function PublicRoute({ children }: PublicRouteProps): ReactElement {
     let target: string = ROUTES.BOOKS;
     if (user?.roles.includes(APP_ROLES.Admin)) target = ROUTES.DASHBOARD;
     else if (user?.roles.includes(APP_ROLES.Librarian)) target = '/app/librarian/dashboard';
-    else if (user?.roles.includes(APP_ROLES.User)) target = '/app/member/home';
+    else if (user?.roles.includes(APP_ROLES.Member)) target = '/app/member/home';
 
     return (
       <Navigate

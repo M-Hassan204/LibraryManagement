@@ -1,6 +1,7 @@
 export enum SubscriptionPlan {
-    Free = 0,
-    Premium = 1
+    None = 0,
+    Free = 1,
+    Premium = 2
 }
 
 export enum SubscriptionStatus {

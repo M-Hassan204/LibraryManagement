@@ -26,7 +26,7 @@ A production-quality Full Stack Library Management System built with **ASP.NET C
 
 ---
 
-## Frontend (Coming Soon)
+## Frontend
 
 - React
 - TypeScript
@@ -36,6 +36,7 @@ A production-quality Full Stack Library Management System built with **ASP.NET C
 - Axios
 - React Hook Form
 - Material UI
+- Zod (Validation)
 
 ---
 
@@ -102,6 +103,7 @@ LibraryManagement.Shared
 - Users Management
 - Borrowing System
 - Dashboard
+- External Book Import (Open Library API)
 
 ---
 
@@ -257,7 +259,7 @@ This project aims to demonstrate:
 | Module | Status |
 |---------|--------|
 | Backend | ✅ Completed |
-| Frontend | 🚧 In Progress |
+| Frontend | ✅ Completed / Active Development |
 | Deployment | ⏳ Planned |
 
 ---

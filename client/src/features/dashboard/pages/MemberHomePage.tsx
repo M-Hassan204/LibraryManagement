@@ -20,12 +20,15 @@ export default function MemberHomePage(): React.ReactElement {
   const getPlanColor = (plan?: SubscriptionPlan) => {
     switch (plan) {
       case SubscriptionPlan.Premium: return 'primary';
+      case SubscriptionPlan.Free: return 'secondary';
+      case SubscriptionPlan.None: return 'default';
       default: return 'default';
     }
   };
 
   const getPlanName = (plan?: SubscriptionPlan) => {
     switch (plan) {
+      case SubscriptionPlan.None: return 'No Plan';
       case SubscriptionPlan.Free: return 'Free Plan';
       case SubscriptionPlan.Premium: return 'Premium Plan';
       default: return 'Loading...';
@@ -62,7 +65,9 @@ export default function MemberHomePage(): React.ReactElement {
                   <Typography variant="body2" color="text.secondary">
                     {subscription?.data?.plan === SubscriptionPlan.Premium 
                       ? 'You have unlimited access to premium books and online reading.' 
-                      : 'Upgrade to Premium for full access.'}
+                      : subscription?.data?.plan === SubscriptionPlan.Free
+                        ? 'Upgrade to Premium for full access.'
+                        : 'You do not have an active subscription plan.'}
                   </Typography>
                 </Box>
               )}

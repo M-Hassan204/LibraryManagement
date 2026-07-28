@@ -10,25 +10,7 @@ export function useMySubscription() {
   });
 }
 
-export function useUpgradeSubscription() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => subscriptionApi.upgradeToPremium(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
-    },
-  });
-}
 
-export function useCancelSubscription() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => subscriptionApi.cancelSubscription(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
-    },
-  });
-}
 
 export function useSubscriptions(params: ResourceParameters) {
   return useQuery({

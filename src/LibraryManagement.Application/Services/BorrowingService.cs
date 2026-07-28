@@ -1,6 +1,7 @@
 using LibraryManagement.Application.DTOs.Borrowing;
 using LibraryManagement.Application.Interfaces.Repositories;
 using LibraryManagement.Application.Interfaces.Services;
+using LibraryManagement.Domain.Constants;
 using LibraryManagement.Domain.Entities;
 using LibraryManagement.Domain.Enums;
 using LibraryManagement.Shared.Exceptions;
@@ -37,76 +38,91 @@ public class BorrowingService : IBorrowingService
         if (user == null)
             throw new NotFoundException("User not found.");
 
-        // Fetch user subscription
-        var subscription = await _unitOfWork.Subscriptions.Query()
-            .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active)
-            .OrderByDescending(s => s.EndDate)
-            .FirstOrDefaultAsync();
-
-        bool isPremium = subscription != null && subscription.Plan == SubscriptionPlanType.Premium && subscription.EndDate >= DateTime.UtcNow;
-
-        var activeBorrowings = await _unitOfWork.BorrowingRecords.FindAsync(b => b.UserId == userId && b.Status == BorrowingStatus.Active);
-        
-        if (activeBorrowings.Any(b => b.BookId == request.BookId))
-            throw new BusinessRuleException("You already have an active borrowing for this book.");
+        bool isAdminOrLibrarian = await _userManager.IsInRoleAsync(user, AppRoles.Admin) || 
+                                  await _userManager.IsInRoleAsync(user, AppRoles.Librarian);
 
         int dueDays = 14;
         LibraryBranch? nearestBranch = null;
         DeliveryRequest? deliveryRequest = null;
         double? branchDistance = null;
 
-        if (isPremium)
+        if (!isAdminOrLibrarian)
         {
-            // Premium Rules: up to 10 books active, 30 days due date, Home Delivery
-            if (activeBorrowings.Count() >= 10)
-                throw new BusinessRuleException("Premium users can have at most 10 active borrowings.");
-            
-            if (string.IsNullOrWhiteSpace(request.DeliveryAddress))
-                throw new BusinessRuleException("Delivery address is required for Premium home delivery.");
+            var subscription = await _unitOfWork.Subscriptions.Query()
+                .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.EndDate)
+                .FirstOrDefaultAsync();
 
-            dueDays = 30;
-            deliveryRequest = new DeliveryRequest
+            var plan = subscription?.Plan ?? SubscriptionPlanType.None;
+
+            if (plan == SubscriptionPlanType.None)
             {
-                UserId = userId,
-                BookId = request.BookId,
-                DeliveryAddress = request.DeliveryAddress,
-                Status = DeliveryStatus.Pending,
-                RequestedDate = DateTime.UtcNow
-            };
+                throw new BusinessRuleException("You must have an active Free or Premium subscription to borrow books.");
+            }
+
+            var activeBorrowings = await _unitOfWork.BorrowingRecords.FindAsync(b => b.UserId == userId && b.Status == BorrowingStatus.Active);
+            if (activeBorrowings.Any(b => b.BookId == request.BookId))
+                throw new BusinessRuleException("You already have an active borrowing for this book.");
+
+            if (plan == SubscriptionPlanType.Premium)
+            {
+                // Premium Rules: up to 10 books active, 30 days due date, Home Delivery
+                if (activeBorrowings.Count() >= 10)
+                    throw new BusinessRuleException("Premium users can have at most 10 active borrowings.");
+                
+                if (string.IsNullOrWhiteSpace(request.DeliveryAddress))
+                    throw new BusinessRuleException("Delivery address is required for Premium home delivery.");
+
+                dueDays = 30;
+                deliveryRequest = new DeliveryRequest
+                {
+                    UserId = userId,
+                    BookId = request.BookId,
+                    DeliveryAddress = request.DeliveryAddress,
+                    Status = DeliveryStatus.Pending,
+                    RequestedDate = DateTime.UtcNow
+                };
+            }
+            else if (plan == SubscriptionPlanType.Free)
+            {
+                // Free Rules: Max 5 borrowings per month, Nearest Branch pickup
+                var currentMonth = DateTime.UtcNow.Month;
+                var currentYear = DateTime.UtcNow.Year;
+                var borrowingsThisMonth = await _unitOfWork.BorrowingRecords.FindAsync(b => 
+                    b.UserId == userId && 
+                    b.BorrowedAt.Month == currentMonth && 
+                    b.BorrowedAt.Year == currentYear);
+
+                if (borrowingsThisMonth.Count() >= 5)
+                    throw new BusinessRuleException("Free users can borrow a maximum of 5 books per month.");
+
+                if (request.Latitude == null || request.Longitude == null)
+                    throw new BusinessRuleException("Location (Latitude/Longitude) is required to find the nearest branch for pickup.");
+
+                var branches = await _unitOfWork.LibraryBranches.Query()
+                    .Where(b => b.IsActive)
+                    .ToListAsync();
+
+                if (!branches.Any())
+                    throw new BusinessRuleException("No active library branches found.");
+
+                nearestBranch = branches
+                    .Select(b => new { Branch = b, Distance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, b.Latitude, b.Longitude) })
+                    .OrderBy(b => b.Distance)
+                    .FirstOrDefault()?.Branch;
+
+                if (nearestBranch != null)
+                {
+                    branchDistance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, nearestBranch.Latitude, nearestBranch.Longitude);
+                }
+            }
         }
         else
         {
-            // Free Rules: Max 5 borrowings per month, Nearest Branch pickup
-            var currentMonth = DateTime.UtcNow.Month;
-            var currentYear = DateTime.UtcNow.Year;
-            var borrowingsThisMonth = await _unitOfWork.BorrowingRecords.FindAsync(b => 
-                b.UserId == userId && 
-                b.BorrowedAt.Month == currentMonth && 
-                b.BorrowedAt.Year == currentYear);
-
-            if (borrowingsThisMonth.Count() >= 5)
-                throw new BusinessRuleException("Free users can borrow a maximum of 5 books per month.");
-
-            if (request.Latitude == null || request.Longitude == null)
-                throw new BusinessRuleException("Location (Latitude/Longitude) is required to find the nearest branch for pickup.");
-
-            var branches = await _unitOfWork.LibraryBranches.Query()
-                .Where(b => b.IsActive)
-                .ToListAsync();
-
-            if (!branches.Any())
-                throw new BusinessRuleException("No active library branches found.");
-
-            nearestBranch = branches
-                .Select(b => new { Branch = b, Distance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, b.Latitude, b.Longitude) })
-                .OrderBy(b => b.Distance)
-                .FirstOrDefault()?.Branch;
-
-            if (nearestBranch != null)
-            {
-                branchDistance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, nearestBranch.Latitude, nearestBranch.Longitude);
-            }
+            // Admin or Librarian can borrow without limits and pick up directly (or we can just skip limits)
+            dueDays = 30; 
         }
+
 
         var borrowing = new BorrowingRecord
         {

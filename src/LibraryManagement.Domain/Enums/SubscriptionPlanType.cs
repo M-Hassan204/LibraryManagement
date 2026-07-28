@@ -5,6 +5,7 @@ namespace LibraryManagement.Domain.Enums;
 /// </summary>
 public enum SubscriptionPlanType
 {
-    Free = 0,
-    Premium = 1
+    None = 0,
+    Free = 1,
+    Premium = 2
 }

@@ -12,17 +12,7 @@ export const subscriptionApi = {
       .then((res) => res.data);
   },
 
-  upgradeToPremium(): Promise<ApiResponse<SubscriptionDto>> {
-    return axiosInstance
-      .post<ApiResponse<SubscriptionDto>>('/subscription/upgrade')
-      .then((res) => res.data);
-  },
 
-  cancelSubscription(): Promise<ApiResponse<SubscriptionDto>> {
-    return axiosInstance
-      .post<ApiResponse<SubscriptionDto>>('/subscription/cancel')
-      .then((res) => res.data);
-  },
 
   getAll(params: ResourceParameters): Promise<ApiResponse<PagedResult<SubscriptionDto>>> {
     return axiosInstance

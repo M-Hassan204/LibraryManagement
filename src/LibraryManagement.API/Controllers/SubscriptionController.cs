@@ -30,29 +30,6 @@ public class SubscriptionController : ControllerBase
         return Ok(response);
     }
 
-    [HttpPost("upgrade")]
-    [Authorize]
-    public async Task<IActionResult> UpgradeToPremium()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        var response = await _subscriptionService.UpgradeToPremiumAsync(userId);
-        return Ok(response);
-    }
-
-    [HttpPost("cancel")]
-    [Authorize]
-    public async Task<IActionResult> CancelSubscription()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        var response = await _subscriptionService.CancelSubscriptionAsync(userId);
-        return Ok(response);
-    }
 
     [HttpGet]
     [Authorize(Roles = "Admin")]

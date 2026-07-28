@@ -1,10 +1,12 @@
 using LibraryManagement.Application.DTOs.Reading;
 using LibraryManagement.Application.Interfaces.Repositories;
 using LibraryManagement.Application.Interfaces.Services;
+using LibraryManagement.Domain.Constants;
 using LibraryManagement.Domain.Entities;
 using LibraryManagement.Domain.Enums;
 using LibraryManagement.Shared.Exceptions;
 using LibraryManagement.Shared.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Application.Services;
@@ -12,10 +14,12 @@ namespace LibraryManagement.Application.Services;
 public class ReadingService : IReadingService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public ReadingService(IUnitOfWork unitOfWork)
+    public ReadingService(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
     {
         _unitOfWork = unitOfWork;
+        _userManager = userManager;
     }
 
     public async Task<ApiResponse<ReadBookResponseDto>> ReadBookOnlineAsync(string userId, int bookId, ReadBookRequestDto request)
@@ -24,52 +28,65 @@ public class ReadingService : IReadingService
         if (book == null)
             throw new NotFoundException("Book not found.");
 
-        var subscription = await _unitOfWork.Subscriptions.Query()
-            .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active)
-            .OrderByDescending(s => s.EndDate)
-            .FirstOrDefaultAsync();
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            throw new NotFoundException("User not found.");
 
-        bool isFree = subscription == null || subscription.Plan == SubscriptionPlanType.Free;
+        bool isAdminOrLibrarian = await _userManager.IsInRoleAsync(user, AppRoles.Admin) || 
+                                  await _userManager.IsInRoleAsync(user, AppRoles.Librarian);
+
         bool hasReachedLimit = false;
 
-        if (isFree)
+        if (!isAdminOrLibrarian)
         {
-            var today = DateTime.UtcNow.Date;
-            var dailyReading = await _unitOfWork.DailyReadingLimits.Query()
-                .Where(r => r.UserId == userId && r.Date == today)
+            var subscription = await _unitOfWork.Subscriptions.Query()
+                .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.EndDate)
                 .FirstOrDefaultAsync();
 
-            if (dailyReading == null)
+            var plan = subscription?.Plan ?? SubscriptionPlanType.None;
+
+            if (plan == SubscriptionPlanType.None)
             {
-                dailyReading = new DailyReadingLimit
-                {
-                    UserId = userId,
-                    Date = today,
-                    PagesRead = 0
-                };
-                await _unitOfWork.DailyReadingLimits.AddAsync(dailyReading);
-                // Save changes below
+                throw new BusinessRuleException("You must have an active Free or Premium subscription to read books.");
             }
 
-            if (dailyReading.PagesRead >= 20)
+            if (plan == SubscriptionPlanType.Free)
             {
-                hasReachedLimit = true;
-                if (request.PageNumber > 20)
+                var today = DateTime.UtcNow.Date;
+                var dailyReading = await _unitOfWork.DailyReadingLimits.Query()
+                    .Where(r => r.UserId == userId && r.Date == today)
+                    .FirstOrDefaultAsync();
+
+                if (dailyReading == null)
                 {
-                    throw new BusinessRuleException("Free plan allows reading a maximum of 20 pages per day. Upgrade to Premium for unlimited reading.");
+                    dailyReading = new DailyReadingLimit
+                    {
+                        UserId = userId,
+                        Date = today,
+                        PagesRead = 0
+                    };
+                    await _unitOfWork.DailyReadingLimits.AddAsync(dailyReading);
                 }
-            }
-            else
-            {
-                // Increment page count
-                // In a real scenario, we track distinct pages, but here we'll just increment up to 20 for simplicity
-                dailyReading.PagesRead++;
-                _unitOfWork.DailyReadingLimits.Update(dailyReading);
-                await _unitOfWork.SaveChangesAsync();
-                
+
                 if (dailyReading.PagesRead >= 20)
                 {
                     hasReachedLimit = true;
+                    if (request.PageNumber > 20)
+                    {
+                        throw new BusinessRuleException("Free plan allows reading a maximum of 20 pages per day. Upgrade to Premium for unlimited reading.");
+                    }
+                }
+                else
+                {
+                    dailyReading.PagesRead++;
+                    _unitOfWork.DailyReadingLimits.Update(dailyReading);
+                    await _unitOfWork.SaveChangesAsync();
+                    
+                    if (dailyReading.PagesRead >= 20)
+                    {
+                        hasReachedLimit = true;
+                    }
                 }
             }
         }

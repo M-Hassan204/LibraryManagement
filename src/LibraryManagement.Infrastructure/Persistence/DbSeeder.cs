@@ -36,6 +36,7 @@ public static class DbSeeder
 
             await SeedRolesAsync(roleManager, logger);
             await SeedAdminUserAsync(userManager, logger);
+            await SeedMemberUserAsync(userManager, logger);
             await SeedCategoriesAsync(context, logger);
             await SeedAuthorsAsync(context, logger);
             await SeedBooksAsync(context, logger);
@@ -53,7 +54,7 @@ public static class DbSeeder
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager, ILogger logger)
     {
-        var roles = new[] { AppRoles.Admin, AppRoles.Student };
+        var roles = new[] { AppRoles.Admin, AppRoles.Librarian, AppRoles.Member };
 
         foreach (var roleName in roles)
         {
@@ -94,6 +95,38 @@ public static class DbSeeder
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             logger.LogError("Failed to create admin user: {Errors}", errors);
+        }
+    }
+
+    private static async Task SeedMemberUserAsync(UserManager<ApplicationUser> userManager, ILogger logger)
+    {
+        const string memberEmail = "member@libraryms.com";
+
+        if (await userManager.FindByEmailAsync(memberEmail) is not null)
+            return;
+
+        var member = new ApplicationUser
+        {
+            FirstName = "System",
+            LastName = "Member",
+            UserName = memberEmail,
+            Email = memberEmail,
+            EmailConfirmed = true,
+            StudentId = "123456",
+            Department = "General",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await userManager.CreateAsync(member, "Member@123456!");
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(member, AppRoles.Member);
+            logger.LogInformation("Member user created: {Email}", memberEmail);
+        }
+        else
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            logger.LogError("Failed to create member user: {Errors}", errors);
         }
     }
 
@@ -274,24 +307,25 @@ public static class DbSeeder
 
     private static async Task SeedSubscriptionsAsync(AppDbContext context, UserManager<ApplicationUser> userManager, ILogger logger)
     {
-        var usersWithoutSubscription = await userManager.Users
+        var members = await userManager.GetUsersInRoleAsync(AppRoles.Member);
+        var usersWithoutSubscription = members
             .Where(u => !context.Subscriptions.Any(s => s.UserId == u.Id))
-            .ToListAsync();
+            .ToList();
 
         if (usersWithoutSubscription.Any())
         {
             var subscriptions = usersWithoutSubscription.Select(u => new Subscription
             {
                 UserId = u.Id,
-                Plan = SubscriptionPlanType.Free,
+                Plan = SubscriptionPlanType.None,
                 StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddYears(10), // Free forever effectively, or could be 1 month renewed
+                EndDate = DateTime.UtcNow.AddYears(100), // None forever effectively
                 Status = SubscriptionStatus.Active
             }).ToList();
 
             await context.Subscriptions.AddRangeAsync(subscriptions);
             await context.SaveChangesAsync();
-            logger.LogInformation("Seeded free subscriptions for {Count} users.", subscriptions.Count);
+            logger.LogInformation("Seeded None subscriptions for {Count} members.", subscriptions.Count);
         }
     }
 }
