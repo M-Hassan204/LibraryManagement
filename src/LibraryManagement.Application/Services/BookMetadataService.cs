@@ -146,7 +146,7 @@ public class BookMetadataService : IBookMetadataService
 
     public async Task<ApiResponse<List<BookMetadataDto>>> SearchBooksAsync(string query, int maxResults = 10)
     {
-        var url = $"https://openlibrary.org/search.json?q={Uri.EscapeDataString(query)}&limit={maxResults}";
+        var url = $"https://openlibrary.org/search.json?q={Uri.EscapeDataString(query)}&limit={maxResults}&fields=key,title,subtitle,author_name,first_publish_year,number_of_pages_median,publisher,language,subject,isbn,cover_i";
         
         try
         {

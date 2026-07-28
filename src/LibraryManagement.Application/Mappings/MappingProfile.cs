@@ -22,8 +22,15 @@ public class MappingProfile : Profile
         CreateMap<Domain.Entities.Author, DTOs.Author.AuthorDto>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FullName))
             .ReverseMap();
-        CreateMap<DTOs.Author.CreateAuthorRequestDto, Domain.Entities.Author>();
-        CreateMap<DTOs.Author.UpdateAuthorRequestDto, Domain.Entities.Author>();
+        CreateMap<DTOs.Author.CreateAuthorRequestDto, Domain.Entities.Author>()
+            .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Name) ? string.Empty : (src.Name.Contains(' ') ? src.Name.Substring(0, src.Name.IndexOf(' ')) : src.Name)))
+            .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Name) || !src.Name.Contains(' ') ? string.Empty : src.Name.Substring(src.Name.IndexOf(' ') + 1)))
+            .ForMember(dest => dest.Bio, opt => opt.MapFrom(src => src.Biography));
+            
+        CreateMap<DTOs.Author.UpdateAuthorRequestDto, Domain.Entities.Author>()
+            .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Name) ? string.Empty : (src.Name.Contains(' ') ? src.Name.Substring(0, src.Name.IndexOf(' ')) : src.Name)))
+            .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Name) || !src.Name.Contains(' ') ? string.Empty : src.Name.Substring(src.Name.IndexOf(' ') + 1)))
+            .ForMember(dest => dest.Bio, opt => opt.MapFrom(src => src.Biography));
 
         // Book Mappings
         CreateMap<Domain.Entities.Book, DTOs.Book.BookDto>()

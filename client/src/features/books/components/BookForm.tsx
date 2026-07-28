@@ -7,8 +7,8 @@ import { FormTextField } from '@/components/form/FormTextField';
 import { FormSelectField } from '@/components/form/FormSelectField';
 import { Autocomplete, TextField } from '@mui/material';
 import { Controller } from 'react-hook-form';
-import { useAuthors } from '@/features/authors/hooks/useAuthors';
-import { useCategories } from '@/features/categories/hooks/useCategories';
+import { useAuthors, useCreateAuthor } from '@/features/authors/hooks/useAuthors';
+import { useCategories, useCreateCategory } from '@/features/categories/hooks/useCategories';
 import { BookStatus } from '@/types/book.types';
 import { LoadingButton } from '@/components/common/LoadingButton';
 import { BookSearchDialog, type ImportedBookData } from './BookSearchDialog';
@@ -33,8 +33,8 @@ const bookSchema = z.object({
   isbn: z.string().min(1, 'ISBN is required'),
   description: z.string().optional(),
   publishedYear: z.coerce.number().int().min(1000).max(9999),
-  categoryId: z.union([z.coerce.number().int().positive(), z.string().min(1, 'Category is required')]),
-  authorId: z.union([z.coerce.number().int().positive(), z.string().min(1, 'Author is required')]),
+  categoryId: z.union([z.coerce.number().int().positive('Category is required'), z.string().min(1, 'Category is required')]),
+  authorId: z.union([z.coerce.number().int().positive('Author is required'), z.string().min(1, 'Author is required')]),
   status: z.nativeEnum(BookStatus).optional(),
   coverImageUrl: z.string().optional(),
   publisher: z.string().optional(),
@@ -54,6 +54,8 @@ interface BookFormProps {
 export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }: BookFormProps) {
   const { data: authors } = useAuthors();
   const { data: categories } = useCategories();
+  const createAuthorMutation = useCreateAuthor();
+  const createCategoryMutation = useCreateCategory();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { control, handleSubmit, setValue, getValues, trigger } = useForm<BookFormValues>({
@@ -71,6 +73,19 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
       language: initialValues?.language || '',
       pages: initialValues?.pages || ('' as any),
     },
+    values: initialValues ? {
+      title: initialValues.title || '',
+      isbn: initialValues.isbn || '',
+      description: initialValues.description || '',
+      publishedYear: initialValues.publishedYear || new Date().getFullYear(),
+      categoryId: initialValues.categoryId || 0,
+      authorId: initialValues.authorId || 0,
+      status: initialValues.status || BookStatus.Available,
+      coverImageUrl: initialValues.coverImageUrl || '',
+      publisher: initialValues.publisher || '',
+      language: initialValues.language || '',
+      pages: initialValues.pages || ('' as any),
+    } : undefined,
   });
 
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -146,7 +161,7 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
     }
   };
 
-  const handleImport = (bookData: ImportedBookData) => {
+  const handleImport = async (bookData: ImportedBookData) => {
     // Mark that user has imported a book — disables auto-fetch error display
     setImportedBook(bookData);
 
@@ -184,37 +199,90 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
     setValue('description', descLines.join('\n').trim(), { shouldValidate: true });
 
     // Try to match author against existing authors
-    if (bookData.authors && bookData.authors.length > 0 && authors) {
-      const joinedAuthors = bookData.authors.join(', ');
-      const matched = authors.find(a => 
-        a.name.toLowerCase() === joinedAuthors.toLowerCase() || 
-        a.name.toLowerCase().includes(joinedAuthors.toLowerCase()) || 
-        joinedAuthors.toLowerCase().includes(a.name.toLowerCase())
-      );
-      if (matched) {
-        setValue('authorId', matched.id, { shouldValidate: true });
-      } else {
-        setValue('authorId', joinedAuthors as any, { shouldValidate: true });
+    const authorName = bookData.authors?.[0]?.trim() ?? "";
+    console.log("Imported author:", authorName);
+    
+    if (authorName) {
+      // Helper to normalize author names (e.g., "Robert C. Martin" -> ["robert", "c", "martin"])
+      const normalizeName = (name: string) => name.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+      const importedWords = normalizeName(authorName);
+      
+      let existingAuthor = null;
+      if (importedWords.length > 0) {
+        existingAuthor = authors?.find(a => {
+          const existingWords = normalizeName(a.name);
+          if (existingWords.length === 0) return false;
+          
+          if (importedWords.length >= 2 && existingWords.length >= 2) {
+             return importedWords[0] === existingWords[0] && 
+                    importedWords[importedWords.length - 1] === existingWords[existingWords.length - 1];
+          }
+          
+          const normalizedImported = authorName.toLowerCase();
+          const normalizedExisting = a.name.trim().toLowerCase();
+          return normalizedExisting === normalizedImported || 
+                 normalizedExisting.includes(normalizedImported) ||
+                 normalizedImported.includes(normalizedExisting);
+        }) || null;
       }
+      
+      console.log("Author exists:", existingAuthor);
+
+      if (existingAuthor) {
+        setValue('authorId', existingAuthor.id, { shouldValidate: true });
+        console.log("Assigned authorId:", existingAuthor.id);
+      } else {
+        try {
+          const payload = { name: authorName, biography: '' };
+          const createdAuthor = await createAuthorMutation.mutateAsync(payload);
+          console.log("Created author:", createdAuthor);
+          setValue("authorId", createdAuthor.id, { shouldValidate: true });
+          console.log("Assigned authorId:", createdAuthor.id);
+        } catch (e) {
+          console.error('[DEBUG] Failed to create author automatically:', e);
+          setValue('authorId', authorName as any, { shouldValidate: true });
+        }
+      }
+    } else {
+      setValue('authorId', '' as any, { shouldValidate: true });
     }
 
     // Try to match category against existing categories
-    if (bookData.categories && bookData.categories.length > 0 && categories) {
+    if (bookData.categories && bookData.categories.length > 0) {
       const mainCat = bookData.categories[0];
-      const matched = categories.find(c => 
-        c.name.toLowerCase() === mainCat.toLowerCase() || 
+      const matchedCat = categories?.find(c => 
+        c.name.toLowerCase() === mainCat.toLowerCase() ||
+        c.name.toLowerCase().includes(mainCat.toLowerCase()) ||
         mainCat.toLowerCase().includes(c.name.toLowerCase())
       );
-      if (matched) {
-        setValue('categoryId', matched.id, { shouldValidate: true });
+      
+      if (matchedCat) {
+        setValue('categoryId', matchedCat.id, { shouldValidate: true });
+        console.log('[DEBUG] Mapped existing categoryId:', matchedCat.id);
       } else {
-        setValue('categoryId', mainCat as any, { shouldValidate: true });
+        try {
+          const newCat = await createCategoryMutation.mutateAsync({ name: mainCat });
+          setValue('categoryId', newCat.id, { shouldValidate: true });
+          console.log('[DEBUG] Mapped new categoryId:', newCat.id);
+        } catch (e) {
+          console.error('[DEBUG] Failed to create category:', e);
+          setValue('categoryId', mainCat as any, { shouldValidate: true });
+        }
       }
     }
+
+    const finalIsbn = bookData.isbn13 || bookData.isbn10 || '';
+    console.log('[DEBUG] Final mapped values:', {
+      isbn: finalIsbn,
+      authors: bookData.authors,
+      categories: bookData.categories,
+    });
 
     // Run full validation after all fields are set
     void trigger();
   };
+
+
 
   const handleFormSubmit = async (data: BookFormValues) => {
     // If pages is empty string, make it undefined
@@ -351,10 +419,36 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
                       return '';
                     }}
                     value={
-                      typeof field.value === 'number'
-                        ? authors.find((a) => a.id === field.value) || null
-                        : field.value || ''
+                      (() => {
+                        const val = field.value;
+                        if (!val) return null;
+                        const numVal = typeof val === 'string' ? parseInt(val, 10) : val;
+                        if (!isNaN(numVal) && authors) {
+                          const found = authors.find((a) => a.id === numVal);
+                          if (found) return found;
+                          return null;
+                        }
+                        return (typeof val === 'number' ? val.toString() : val) as any;
+                      })()
                     }
+                    isOptionEqualToValue={(option, value) => {
+                      if (!option || !value) return false;
+                      if (typeof option === 'string') return option === value;
+                      if (typeof option === 'object' && typeof value === 'object') return option.id === value.id;
+                      return false;
+                    }}
+                    renderOption={(props, option) => {
+                      // Autocomplete provides a default key in props, but to avoid 
+                      // duplicate key warnings when two authors have the same name,
+                      // we extract it and force our own unique key using option.id
+                      const { key, ...optionProps } = props as any;
+                      const uniqueKey = typeof option === 'string' ? option : option.id;
+                      return (
+                        <li key={uniqueKey} {...optionProps}>
+                          {typeof option === 'string' ? option : option.name}
+                        </li>
+                      );
+                    }}
                     onChange={(_, data) => {
                       if (!data) field.onChange('');
                       else if (typeof data === 'string') field.onChange(data);
@@ -374,6 +468,7 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
                 )}
               />
             )}
+
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             {categories && (
@@ -391,10 +486,22 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
                       return '';
                     }}
                     value={
-                      typeof field.value === 'number'
-                        ? categories.find((c) => c.id === field.value) || null
-                        : field.value || ''
+                      (() => {
+                        const val = field.value;
+                        if (!val) return null;
+                        const numVal = typeof val === 'string' ? parseInt(val, 10) : val;
+                        if (!isNaN(numVal) && categories) {
+                          return categories.find((c) => c.id === numVal) || null;
+                        }
+                        return (typeof val === 'number' ? val.toString() : val) as any;
+                      })()
                     }
+                    isOptionEqualToValue={(option, value) => {
+                      if (!option || !value) return false;
+                      if (typeof option === 'string') return option === value;
+                      if (typeof option === 'object' && typeof value === 'object') return option.id === value.id;
+                      return false;
+                    }}
                     onChange={(_, data) => {
                       if (!data) field.onChange('');
                       else if (typeof data === 'string') field.onChange(data);
