@@ -24,7 +24,7 @@ public class BookController : BaseApiController
         return Ok(await _bookService.GetAllBooksAsync(parameters));
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<ApiResponse<BookDto>>> GetBookById(int id)
     {
         return Ok(await _bookService.GetBookByIdAsync(id));
@@ -38,7 +38,7 @@ public class BookController : BaseApiController
     }
 
     [Authorize(Roles = AppRoles.Admin)]
-    [HttpPut("{id}")]
+    [HttpPut("{id:int}")]
     public async Task<ActionResult<ApiResponse<BookDto>>> UpdateBook(int id, [FromBody] UpdateBookRequestDto request)
     {
         if (id != request.Id)
@@ -48,14 +48,14 @@ public class BookController : BaseApiController
     }
 
     [Authorize(Roles = AppRoles.Admin)]
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     public async Task<ActionResult<ApiResponse<bool>>> DeleteBook(int id)
     {
         return Ok(await _bookService.DeleteBookAsync(id));
     }
 
     [Authorize(Roles = AppRoles.Admin)]
-    [HttpPost("{id}/cover-image")]
+    [HttpPost("{id:int}/cover-image")]
     public async Task<ActionResult<ApiResponse<BookDto>>> UploadCoverImage(int id, IFormFile file)
     {
         if (file == null || file.Length == 0)
@@ -81,4 +81,41 @@ public class BookController : BaseApiController
     {
         return Ok(await _bookMetadataService.FetchMetadataAsync(request));
     }
+
+    /// <summary>
+    /// Searches Google Books via the backend and returns a list of matching books.
+    /// Accepts isbn, title, and/or author as query parameters and builds the Google Books query server-side.
+    /// This avoids browser-side CORS restrictions and API rate-limiting without an API key.
+    /// </summary>
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpGet("search")]
+    public async Task<ActionResult<ApiResponse<List<BookMetadataDto>>>> SearchBooks(
+        [FromQuery] string? isbn,
+        [FromQuery] string? title,
+        [FromQuery] string? author)
+    {
+        // Build the Google Books query string server-side
+        string query;
+        if (!string.IsNullOrWhiteSpace(isbn))
+        {
+            query = isbn.Trim();
+        }
+        else
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(title))
+                parts.Add(title.Trim());
+            if (!string.IsNullOrWhiteSpace(author))
+                parts.Add(author.Trim());
+
+            if (parts.Count == 0)
+                return BadRequest(ApiResponse<List<BookMetadataDto>>.FailureResponse(
+                    "Provide at least one search parameter: isbn, title, or author."));
+
+            query = string.Join(" ", parts);
+        }
+
+        return Ok(await _bookMetadataService.SearchBooksAsync(query));
+    }
 }
+

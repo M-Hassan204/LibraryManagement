@@ -55,4 +55,10 @@ export const booksApi = {
       .get<ApiResponse<BookMetadata>>('/book/metadata', { params })
       .then((res) => res.data);
   },
+
+  searchBooks(params: { isbn?: string; title?: string; author?: string }): Promise<ApiResponse<BookMetadata[]>> {
+    return axiosInstance
+      .get<ApiResponse<BookMetadata[]>>('/book/search', { params })
+      .then((res) => res.data);
+  },
 };

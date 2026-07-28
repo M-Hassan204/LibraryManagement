@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Box, Button, Card, Typography, Grid, CircularProgress } from '@mui/material';
+import { Box, Button, Card, Typography, Grid, CircularProgress, Alert } from '@mui/material';
 import { FormTextField } from '@/components/form/FormTextField';
 import { FormSelectField } from '@/components/form/FormSelectField';
 import { Autocomplete, TextField } from '@mui/material';
@@ -13,6 +13,7 @@ import { BookStatus } from '@/types/book.types';
 import { LoadingButton } from '@/components/common/LoadingButton';
 import { BookSearchDialog, type ImportedBookData } from './BookSearchDialog';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { getImageUrl } from '@/utils/imageUrl';
 import { useBookMetadata } from '../hooks/useBooks';
 
@@ -55,7 +56,7 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
   const { data: categories } = useCategories();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const { control, handleSubmit, setValue, getValues } = useForm<BookFormValues>({
+  const { control, handleSubmit, setValue, getValues, trigger } = useForm<BookFormValues>({
     resolver: zodResolver(bookSchema) as any,
     defaultValues: {
       title: initialValues?.title || '',
@@ -74,6 +75,8 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
 
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [previewCoverUrl, setPreviewCoverUrl] = useState<string | null>(initialValues?.coverImageUrl || null);
+  // Track whether user has successfully imported a book via the dialog
+  const [importedBook, setImportedBook] = useState<ImportedBookData | null>(null);
 
   const watchIsbn = useWatch({ control, name: 'isbn' });
   const watchTitle = useWatch({ control, name: 'title' });
@@ -87,12 +90,12 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
     ? authors?.find(a => a.id === debouncedAuthorId)?.name || ''
     : typeof debouncedAuthorId === 'string' ? debouncedAuthorId : '';
 
-  const shouldFetchMetadata = !isEdit && Boolean(
+  const shouldFetchMetadata = !isEdit && !importedBook && Boolean(
     (debouncedIsbn && debouncedIsbn.length >= 10) || 
     (debouncedTitle && debouncedTitle.length > 2 && authorName)
   );
 
-  const { data: metadata, isLoading: isMetadataLoading, error: metadataError, refetch: refetchMetadata } = useBookMetadata(
+  const { data: metadata, isLoading: isMetadataLoading, error: metadataError } = useBookMetadata(
     { 
       isbn: debouncedIsbn && debouncedIsbn.length >= 10 ? debouncedIsbn : undefined, 
       title: (!debouncedIsbn || debouncedIsbn.length < 10) ? debouncedTitle : undefined, 
@@ -101,6 +104,7 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
     shouldFetchMetadata
   );
 
+  // Auto-fill form fields from auto-fetched metadata (only empty fields)
   useEffect(() => {
     if (metadata && !isEdit) {
       if (!getValues('description') && metadata.description) setValue('description', metadata.description, { shouldValidate: true });
@@ -122,13 +126,17 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
          setValue('title', metadata.title, { shouldValidate: true });
       }
 
-      if (!getValues('isbn') && metadata.isbn13) {
+      // Only set ISBN from metadata if the field is empty (user hasn't typed one)
+      const currentIsbn = getValues('isbn');
+      if (!currentIsbn && metadata.isbn13) {
          setValue('isbn', metadata.isbn13, { shouldValidate: true });
-      } else if (!getValues('isbn') && metadata.isbn10) {
+         void trigger('isbn');
+      } else if (!currentIsbn && metadata.isbn10) {
          setValue('isbn', metadata.isbn10, { shouldValidate: true });
+         void trigger('isbn');
       }
     }
-  }, [metadata, isEdit, setValue, getValues, selectedFile]);
+  }, [metadata, isEdit, setValue, getValues, selectedFile, trigger]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -139,8 +147,16 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
   };
 
   const handleImport = (bookData: ImportedBookData) => {
+    // Mark that user has imported a book — disables auto-fetch error display
+    setImportedBook(bookData);
+
     setValue('title', bookData.title, { shouldValidate: true });
-    setValue('isbn', bookData.isbn13 || bookData.isbn10 || '', { shouldValidate: true });
+
+    // Set ISBN — prefer ISBN-13, fall back to ISBN-10
+    const isbnValue = bookData.isbn13 || bookData.isbn10 || '';
+    setValue('isbn', isbnValue, { shouldValidate: true });
+    // Explicitly trigger ISBN validation to clear any stale error
+    void trigger('isbn');
     
     if (bookData.publishedDate) {
       const year = parseInt(bookData.publishedDate.substring(0, 4));
@@ -159,17 +175,22 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
     if (bookData.language) setValue('language', bookData.language, { shouldValidate: true });
     if (bookData.pageCount) setValue('pages', bookData.pageCount, { shouldValidate: true });
 
-    let descLines = [];
+    // Build description from subtitle + external categories + main description
+    const descLines: string[] = [];
     if (bookData.subtitle) descLines.push(`Subtitle: ${bookData.subtitle}`);
     if (bookData.categories && bookData.categories.length > 0) descLines.push(`External Categories: ${bookData.categories.join(', ')}`);
     if (descLines.length > 0) descLines.push('');
     if (bookData.description) descLines.push(bookData.description);
-    
     setValue('description', descLines.join('\n').trim(), { shouldValidate: true });
 
+    // Try to match author against existing authors
     if (bookData.authors && bookData.authors.length > 0 && authors) {
       const joinedAuthors = bookData.authors.join(', ');
-      const matched = authors.find(a => a.name.toLowerCase() === joinedAuthors.toLowerCase() || a.name.toLowerCase().includes(joinedAuthors.toLowerCase()) || joinedAuthors.toLowerCase().includes(a.name.toLowerCase()));
+      const matched = authors.find(a => 
+        a.name.toLowerCase() === joinedAuthors.toLowerCase() || 
+        a.name.toLowerCase().includes(joinedAuthors.toLowerCase()) || 
+        joinedAuthors.toLowerCase().includes(a.name.toLowerCase())
+      );
       if (matched) {
         setValue('authorId', matched.id, { shouldValidate: true });
       } else {
@@ -177,15 +198,22 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
       }
     }
 
+    // Try to match category against existing categories
     if (bookData.categories && bookData.categories.length > 0 && categories) {
       const mainCat = bookData.categories[0];
-      const matched = categories.find(c => c.name.toLowerCase() === mainCat.toLowerCase() || mainCat.toLowerCase().includes(c.name.toLowerCase()));
+      const matched = categories.find(c => 
+        c.name.toLowerCase() === mainCat.toLowerCase() || 
+        mainCat.toLowerCase().includes(c.name.toLowerCase())
+      );
       if (matched) {
         setValue('categoryId', matched.id, { shouldValidate: true });
       } else {
         setValue('categoryId', mainCat as any, { shouldValidate: true });
       }
     }
+
+    // Run full validation after all fields are set
+    void trigger();
   };
 
   const handleFormSubmit = async (data: BookFormValues) => {
@@ -193,6 +221,12 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
     const submitData = { ...data, pages: data.pages === '' ? undefined : data.pages } as any;
     await onSubmit(submitData, selectedFile);
   };
+
+  // Determine what to show in the metadata preview panel
+  const showImportedSuccess = importedBook !== null;
+  const showMetadataSuccess = !importedBook && metadata;
+  const showMetadataError = !importedBook && !metadata && metadataError;
+  const showMetadataIdle = !importedBook && !metadata && !metadataError && !isMetadataLoading;
 
   return (
     <Card sx={{ p: 4 }}>
@@ -215,20 +249,47 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
                   <Typography variant="h6">
                     Book Information (Auto Fetch)
                   </Typography>
-                  <Button size="small" onClick={() => refetchMetadata()} disabled={!shouldFetchMetadata || isMetadataLoading}>
-                    Refresh
-                  </Button>
                 </Box>
-                {isMetadataLoading ? (
+
+                {isMetadataLoading && !importedBook ? (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <CircularProgress size={20} />
                     <Typography variant="body2">Searching Google Books...</Typography>
                   </Box>
-                ) : metadataError ? (
-                  <Typography color="error" variant="body2">
-                    No metadata was found for this book.
-                  </Typography>
-                ) : metadata ? (
+                ) : showImportedSuccess ? (
+                  // User imported from dialog — always show success state
+                  <Grid container spacing={2}>
+                    {importedBook.coverImageUrl && (
+                      <Grid size={{ xs: 12, sm: 3 }}>
+                        <Box
+                          component="img"
+                          src={getImageUrl(importedBook.coverImageUrl)}
+                          alt="Imported Cover"
+                          sx={{ width: '100%', borderRadius: 1 }}
+                        />
+                      </Grid>
+                    )}
+                    <Grid size={{ xs: 12, sm: importedBook.coverImageUrl ? 9 : 12 }}>
+                      <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 1 }}>
+                        Book imported successfully
+                      </Alert>
+                      <Typography variant="subtitle1"><strong>{importedBook.title}</strong></Typography>
+                      <Typography variant="body2" color="text.secondary">By {importedBook.authors.join(', ')}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {importedBook.publisher} {importedBook.publishedDate ? `(${importedBook.publishedDate.substring(0, 4)})` : ''}
+                      </Typography>
+                      {(importedBook.isbn13 || importedBook.isbn10) && (
+                        <Typography variant="body2" color="text.secondary">
+                          ISBN: {importedBook.isbn13 || importedBook.isbn10}
+                        </Typography>
+                      )}
+                      <Button size="small" sx={{ mt: 1 }} onClick={() => setImportedBook(null)}>
+                        Clear import
+                      </Button>
+                    </Grid>
+                  </Grid>
+                ) : showMetadataSuccess ? (
+                  // Auto-fetch found metadata
                   <Grid container spacing={2}>
                     {metadata.coverImageUrl && (
                       <Grid size={{ xs: 12, sm: 3 }}>
@@ -251,11 +312,17 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
                       </Typography>
                     </Grid>
                   </Grid>
-                ) : (
+                ) : showMetadataError ? (
+                  // Auto-fetch genuinely returned nothing
+                  <Typography color="error" variant="body2">
+                    No metadata was found for this book.
+                  </Typography>
+                ) : showMetadataIdle ? (
+                  // Nothing entered yet
                   <Typography variant="body2" color="text.secondary">
                     Enter ISBN or Title + Author to automatically fetch metadata.
                   </Typography>
-                )}
+                ) : null}
               </Card>
             </Grid>
           </Grid>
