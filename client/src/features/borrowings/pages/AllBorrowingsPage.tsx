@@ -26,6 +26,7 @@ import { useAllBorrowings, useReturnBook } from '../hooks/useBorrowings';
 import { BorrowingStatus } from '@/types/borrowing.types';
 import type { ResourceParameters } from '@/types/api.types';
 import { BorrowBookDialog } from '../components/BorrowBookDialog';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function AllBorrowingsPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -170,8 +171,13 @@ export default function AllBorrowingsPage(): React.ReactElement {
                 </TableRow>
               ) : !filteredBorrowings.length ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    No borrowings found for this filter.
+                  <TableCell colSpan={7} sx={{ p: 0 }}>
+                    <EmptyState 
+                      title="No borrowings found" 
+                      description="There are no borrowings matching this filter."
+                      actionText="Borrow Book"
+                      onAction={() => setBorrowDialogOpen(true)}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (

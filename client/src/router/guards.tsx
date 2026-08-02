@@ -111,24 +111,18 @@ interface PublicRouteProps {
  * so they don't land on the login page while already logged in.
  */
 export function PublicRoute({ children }: PublicRouteProps): ReactElement {
-  const { isAuthenticated, user, isInitializing } = useAuth();
+  const { isAuthenticated, isInitializing, user, isAdmin } = useAuth();
 
   if (isInitializing) {
     return <></>;
   }
 
   if (isAuthenticated) {
-    let target: string = ROUTES.BOOKS;
-    if (user?.roles.includes(APP_ROLES.Admin)) target = ROUTES.DASHBOARD;
-    else if (user?.roles.includes(APP_ROLES.Librarian)) target = '/app/librarian/dashboard';
-    else if (user?.roles.includes(APP_ROLES.Member)) target = '/app/member/home';
-
-    return (
-      <Navigate
-        to={target}
-        replace
-      />
-    );
+    const isLibrarian = user?.roles?.includes(APP_ROLES.Librarian) && !isAdmin;
+    if (isAdmin || isLibrarian) {
+      return <Navigate to={ROUTES.DASHBOARD} replace />;
+    }
+    return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return <>{children}</>;

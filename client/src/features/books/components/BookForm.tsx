@@ -594,6 +594,14 @@ export function BookForm({ initialValues, onSubmit, isLoading, isEdit = false }:
         </Grid>
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/app/dashboard'}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
           <LoadingButton
             type="submit"
             variant="contained"

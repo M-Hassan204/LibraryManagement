@@ -35,6 +35,8 @@ import { ROUTES } from '@/constants/routes';
 import { BookStatus } from '@/types/book.types';
 import type { ResourceParameters } from '@/types/api.types';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { EmptyState } from '@/components/common/EmptyState';
+import { LoadingState } from '@/components/common/LoadingState';
 
 export default function AdminBooksPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -180,8 +182,8 @@ export default function AdminBooksPage(): React.ReactElement {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                    Loading books...
+                  <TableCell colSpan={6} sx={{ p: 0 }}>
+                    <LoadingState message="Loading books..." />
                   </TableCell>
                 </TableRow>
               ) : isError ? (
@@ -192,8 +194,13 @@ export default function AdminBooksPage(): React.ReactElement {
                 </TableRow>
               ) : !pagedBooks?.items.length ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                    No books found.
+                  <TableCell colSpan={6} sx={{ p: 0 }}>
+                    <EmptyState 
+                      title="No books found" 
+                      description={params.searchTerm ? "Try adjusting your search criteria." : "There are currently no books in the library."}
+                      actionText="Add New Book"
+                      onAction={() => navigate(ROUTES.ADMIN_BOOK_CREATE)}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (

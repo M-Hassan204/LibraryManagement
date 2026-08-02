@@ -24,6 +24,7 @@ import { Skeleton, Snackbar, Alert as MuiAlert } from '@mui/material';
 import { useCategories, useDeleteCategory } from '../hooks/useCategories';
 import { ROUTES } from '@/constants/routes';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function CategoriesPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -108,8 +109,13 @@ export default function CategoriesPage(): React.ReactElement {
                 </TableRow>
               ) : !categories?.length ? (
                 <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
-                    No categories found.
+                  <TableCell colSpan={3} sx={{ p: 0 }}>
+                    <EmptyState 
+                      title="No categories found" 
+                      description="There are currently no categories in the library."
+                      actionText="Add New Category"
+                      onAction={() => navigate(ROUTES.CATEGORY_CREATE)}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (

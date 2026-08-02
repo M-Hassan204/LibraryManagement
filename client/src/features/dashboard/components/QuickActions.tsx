@@ -5,14 +5,22 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CategoryIcon from '@mui/icons-material/Category';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import PeopleIcon from '@mui/icons-material/People';
+import GroupIcon from '@mui/icons-material/Group';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
 import { ROUTES } from '@/constants/routes';
 
 const actions = [
   { label: 'Add Book', icon: <AutoStoriesIcon />, path: ROUTES.ADMIN_BOOK_CREATE, color: 'primary' },
+  { label: 'Manage Books', icon: <LibraryBooksIcon />, path: ROUTES.ADMIN_BOOKS, color: 'primary' },
   { label: 'Add Author', icon: <PersonAddIcon />, path: ROUTES.AUTHOR_CREATE, color: 'secondary' },
-  { label: 'Add Category', icon: <CategoryIcon />, path: ROUTES.CATEGORY_CREATE, color: 'info' },
+  { label: 'Manage Authors', icon: <PeopleIcon />, path: ROUTES.AUTHORS, color: 'secondary' },
+  { label: 'Manage Categories', icon: <CategoryIcon />, path: ROUTES.CATEGORIES, color: 'info' },
+  { label: 'Manage Users', icon: <GroupIcon />, path: ROUTES.USERS, color: 'warning' },
   { label: 'Borrowings', icon: <ArrowUpwardIcon />, path: ROUTES.BORROWINGS, color: 'success' },
+  { label: 'Deliveries', icon: <LocalShippingIcon />, path: ROUTES.ADMIN_DELIVERIES, color: 'error' },
 ];
 
 export function QuickActions(): React.ReactElement {

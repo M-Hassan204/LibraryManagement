@@ -1,11 +1,11 @@
 import { lazy, Suspense, type ReactElement } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
-import { AdminRoute, LibrarianRoute, MemberRoute, ProtectedRoute, PublicRoute } from './guards';
+import { APP_ROLES } from '@/constants/roles';
+import { AdminRoute, ProtectedRoute, PublicRoute } from './guards';
 
 // ─── Lazy-loaded pages ────────────────────────────────────────────────────────
-// Every page is lazy-loaded for code splitting.
-// Bundles are split per-page, keeping initial load fast.
 
 // Public auth pages
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'));
@@ -13,19 +13,20 @@ const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'));
 const VerifyEmailPage = lazy(() => import('@/features/auth/pages/VerifyEmailPage'));
 const VerifyOtpPage = lazy(() => import('@/features/auth/pages/VerifyOtpPage'));
 
-// Public catalogue
+// Public catalogue & new pages
 const BooksPublicPage = lazy(() => import('@/features/books/pages/BooksPublicPage'));
 const BookDetailPage = lazy(() => import('@/features/books/pages/BookDetailPage'));
 const BookReaderPage = lazy(() => import('@/features/books/pages/BookReaderPage'));
+const AboutPage = lazy(() => import('@/features/public/pages/AboutPage'));
+const ContactPage = lazy(() => import('@/features/public/pages/ContactPage'));
 
-// App shell layout (authenticated wrapper)
-const AppShell = lazy(() => import('@/components/layout/AppShell'));
+// Shared Layout wrapper
+const AppLayout = lazy(() => import('@/components/layout/AppLayout'));
 
+// Shared Home (Normal Users and Guests)
 const HomePage = lazy(() => import('@/features/dashboard/pages/HomePage'));
-const LibrarianDashboardPage = lazy(() => import('@/features/dashboard/pages/LibrarianDashboardPage'));
-const MemberHomePage = lazy(() => import('@/features/dashboard/pages/MemberHomePage'));
 
-// Admin pages
+// Admin & Librarian pages
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
 const AdminSubscriptionsPage = lazy(() => import('@/features/subscriptions/pages/AdminSubscriptionsPage'));
 const AdminBooksPage = lazy(() => import('@/features/books/pages/AdminBooksPage'));
@@ -52,9 +53,23 @@ const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage')
 const UnauthorizedPage = lazy(() => import('@/features/errors/UnauthorizedPage'));
 const NotFoundPage = lazy(() => import('@/features/errors/NotFoundPage'));
 
+// ─── Root Redirect Logic ──────────────────────────────────────────────────────
+const RootRedirect = () => {
+  const { isAuthenticated, isInitializing, user, isAdmin } = useAuth();
+  
+  if (isInitializing) return <PageLoader />;
+  
+  const isLibrarian = user?.roles?.includes(APP_ROLES.Librarian) && !isAdmin;
+  
+  if (isAuthenticated && (isAdmin || isLibrarian)) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
+  }
+  
+  // Normal users and guests go to /home
+  return <Navigate to={ROUTES.HOME} replace />;
+};
+
 // ─── Suspense fallback ────────────────────────────────────────────────────────
-// A minimal, centered loading indicator shown while lazy chunks are loading.
-// The full-page skeleton is reserved for data loading states inside pages.
 const PageLoader = (): ReactElement => (
   <div
     style={{
@@ -69,130 +84,141 @@ const PageLoader = (): ReactElement => (
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 export const router = createBrowserRouter([
-  // ── Root redirect ─────────────────────────────────────────────────────────
   {
     path: '/',
-    element: <Navigate to={ROUTES.BOOKS} replace />,
-  },
-
-  // ── Public auth routes ────────────────────────────────────────────────────
-  {
-    path: ROUTES.LOGIN,
-    element: (
-      <PublicRoute>
-        <Suspense fallback={<PageLoader />}>
-          <LoginPage />
-        </Suspense>
-      </PublicRoute>
-    ),
-  },
-  {
-    path: ROUTES.REGISTER,
-    element: (
-      <PublicRoute>
-        <Suspense fallback={<PageLoader />}>
-          <RegisterPage />
-        </Suspense>
-      </PublicRoute>
-    ),
-  },
-  {
-    path: ROUTES.VERIFY_EMAIL,
     element: (
       <Suspense fallback={<PageLoader />}>
-        <VerifyEmailPage />
+        <AppLayout />
       </Suspense>
-    ),
-  },
-  {
-    path: ROUTES.VERIFY_OTP,
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <VerifyOtpPage />
-      </Suspense>
-    ),
-  },
-
-  // ── Public catalogue routes ───────────────────────────────────────────────
-  {
-    path: ROUTES.BOOKS,
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <BooksPublicPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: '/books/:id',
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <BookDetailPage />
-      </Suspense>
-    ),
-  },
-
-  // ── Authenticated app routes (nested under AppShell) ──────────────────────
-  {
-    path: ROUTES.APP,
-    element: (
-      <ProtectedRoute>
-        <Suspense fallback={<PageLoader />}>
-          <AppShell />
-        </Suspense>
-      </ProtectedRoute>
     ),
     children: [
-      // Default /app redirect
       {
         index: true,
-        element: <Navigate to="/app/home" replace />,
+        element: <RootRedirect />,
       },
-
-      // Authenticated user routes
+      // ── Public Routes (accessible to everyone) ──────────────────────────────
       {
-        path: '/app/home',
+        path: ROUTES.HOME,
         element: (
           <Suspense fallback={<PageLoader />}>
             <HomePage />
           </Suspense>
         ),
       },
-      
-      // Member Routes
       {
-        path: '/app/member/home',
+        path: ROUTES.ABOUT,
         element: (
-          <MemberRoute>
-            <Suspense fallback={<PageLoader />}>
-              <MemberHomePage />
-            </Suspense>
-          </MemberRoute>
+          <Suspense fallback={<PageLoader />}>
+            <AboutPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.CONTACT,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ContactPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.BOOKS,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <BooksPublicPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/books/:id',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <BookDetailPage />
+          </Suspense>
         ),
       },
       
-      // Shared authenticated routes
+      // ── Public Auth Routes (accessible only to Guests) ──────────────────────
       {
-        path: '/app/books/:id/read',
+        path: ROUTES.LOGIN,
+        element: (
+          <PublicRoute>
+            <Suspense fallback={<PageLoader />}>
+              <LoginPage />
+            </Suspense>
+          </PublicRoute>
+        ),
+      },
+      {
+        path: ROUTES.REGISTER,
+        element: (
+          <PublicRoute>
+            <Suspense fallback={<PageLoader />}>
+              <RegisterPage />
+            </Suspense>
+          </PublicRoute>
+        ),
+      },
+      {
+        path: ROUTES.VERIFY_EMAIL,
         element: (
           <Suspense fallback={<PageLoader />}>
-            <BookReaderPage />
+            <VerifyEmailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: ROUTES.VERIFY_OTP,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <VerifyOtpPage />
           </Suspense>
         ),
       },
 
-      // Librarian routes
+      // ── Authenticated Routes (Accessible to Any Role) ───────────────────────
       {
-        path: '/app/librarian/dashboard',
+        path: '/app/books/:id/read',
         element: (
-          <LibrarianRoute>
+          <ProtectedRoute>
             <Suspense fallback={<PageLoader />}>
-              <LibrarianDashboardPage />
+              <BookReaderPage />
             </Suspense>
-          </LibrarianRoute>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.MY_BORROWINGS,
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoader />}>
+              <MyBorrowingsPage />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.PROFILE,
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoader />}>
+              <ProfilePage />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.SETTINGS,
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoader />}>
+              <SettingsPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
       },
 
-      // Admin-only routes
+      // ── Admin and Librarian Routes ──────────────────────────────────────────
       {
         path: ROUTES.DASHBOARD,
         element: (
@@ -204,7 +230,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'admin/subscriptions',
+        path: 'app/admin/subscriptions',
         element: (
           <AdminRoute>
             <Suspense fallback={<PageLoader />}>
@@ -354,53 +380,27 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Any authenticated user routes
+      // ── Error Routes ────────────────────────────────────────────────────────
       {
-        path: ROUTES.MY_BORROWINGS,
+        path: ROUTES.UNAUTHORIZED,
         element: (
           <Suspense fallback={<PageLoader />}>
-            <MyBorrowingsPage />
+            <UnauthorizedPage />
           </Suspense>
         ),
       },
       {
-        path: ROUTES.PROFILE,
+        path: ROUTES.NOT_FOUND,
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ProfilePage />
+            <NotFoundPage />
           </Suspense>
         ),
       },
       {
-        path: ROUTES.SETTINGS,
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <SettingsPage />
-          </Suspense>
-        ),
+        path: '*',
+        element: <Navigate to={ROUTES.NOT_FOUND} replace />,
       },
     ],
-  },
-
-  // ── Error pages ───────────────────────────────────────────────────────────
-  {
-    path: ROUTES.UNAUTHORIZED,
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <UnauthorizedPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: ROUTES.NOT_FOUND,
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <NotFoundPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: '*',
-    element: <Navigate to={ROUTES.NOT_FOUND} replace />,
   },
 ]);

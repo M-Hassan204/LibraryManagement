@@ -19,7 +19,9 @@ export default function BooksPublicPage(): React.ReactElement {
   const { data: booksData, isLoading: booksLoading } = useBooks({ 
     pageNumber: page, 
     pageSize: 12,
-    searchTerm: search || undefined
+    searchTerm: search || undefined,
+    sortBy: 'createdAt',
+    sortDescending: true
   });
 
   const { data: categoriesData } = useCategories();

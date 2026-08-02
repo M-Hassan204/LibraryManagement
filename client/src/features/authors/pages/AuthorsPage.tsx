@@ -24,6 +24,7 @@ import { Skeleton, Snackbar, Alert as MuiAlert } from '@mui/material';
 import { useAuthors, useDeleteAuthor } from '../hooks/useAuthors';
 import { ROUTES } from '@/constants/routes';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function AuthorsPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -108,8 +109,13 @@ export default function AuthorsPage(): React.ReactElement {
                 </TableRow>
               ) : !authors?.length ? (
                 <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
-                    No authors found.
+                  <TableCell colSpan={3} sx={{ p: 0 }}>
+                    <EmptyState 
+                      title="No authors found" 
+                      description="There are currently no authors in the library."
+                      actionText="Add New Author"
+                      onAction={() => navigate(ROUTES.AUTHOR_CREATE)}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (

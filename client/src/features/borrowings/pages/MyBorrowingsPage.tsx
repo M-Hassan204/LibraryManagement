@@ -8,6 +8,7 @@ import { useMyBorrowings } from '@/features/borrowings/hooks/useBorrowings';
 import { BorrowingStatus } from '@/types/borrowing.types';
 import { ROUTES } from '@/constants/routes';
 import { ImportContacts as ReadIcon } from '@mui/icons-material';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function MyBorrowingsPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -96,11 +97,13 @@ export default function MyBorrowingsPage(): React.ReactElement {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">You haven't borrowed any books yet.</Typography>
-                    <Button variant="contained" sx={{ mt: 2 }} onClick={() => navigate(ROUTES.BOOKS)}>
-                      Browse Catalogue
-                    </Button>
+                  <TableCell colSpan={6} sx={{ p: 0 }}>
+                    <EmptyState 
+                      title="No borrowings found" 
+                      description="You haven't borrowed any books yet."
+                      actionText="Browse Catalogue"
+                      onAction={() => navigate(ROUTES.BOOKS)}
+                    />
                   </TableCell>
                 </TableRow>
               )}

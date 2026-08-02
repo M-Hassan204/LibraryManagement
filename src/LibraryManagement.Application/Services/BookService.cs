@@ -48,6 +48,10 @@ public class BookService : IBookService
                 query = parameters.SortDescending ? query.OrderByDescending(b => b.Author.FirstName).ThenByDescending(b => b.Author.LastName) : query.OrderBy(b => b.Author.FirstName).ThenBy(b => b.Author.LastName);
             else if (parameters.SortBy.Equals("category", StringComparison.OrdinalIgnoreCase))
                 query = parameters.SortDescending ? query.OrderByDescending(b => b.Category.Name) : query.OrderBy(b => b.Category.Name);
+            else if (parameters.SortBy.Equals("createdAt", StringComparison.OrdinalIgnoreCase))
+                query = parameters.SortDescending ? query.OrderByDescending(b => b.CreatedAt) : query.OrderBy(b => b.CreatedAt);
+            else if (parameters.SortBy.Equals("id", StringComparison.OrdinalIgnoreCase))
+                query = parameters.SortDescending ? query.OrderByDescending(b => b.Id) : query.OrderBy(b => b.Id);
         }
         else
         {

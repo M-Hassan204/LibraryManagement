@@ -3,7 +3,9 @@
 
 export const ROUTES = {
   // Public
-  HOME: '/',
+  HOME: '/home',
+  ABOUT: '/about',
+  CONTACT: '/contact',
   LOGIN: '/login',
   REGISTER: '/register',
   VERIFY_EMAIL: '/verify-email',
