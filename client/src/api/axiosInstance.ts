@@ -71,7 +71,12 @@ axiosInstance.interceptors.response.use(
 
     // ── 403 Forbidden ──────────────────────────────────────────────────────
     if (error.response?.status === 403) {
-      window.location.href = '/unauthorized';
+      console.warn('[axiosInstance] 403 Forbidden received from API', {
+        url: error.config?.url,
+        method: error.config?.method,
+        response: error.response?.data
+      });
+      // Removing the global redirect to allow components to handle 403s gracefully
       return Promise.reject(error);
     }
 

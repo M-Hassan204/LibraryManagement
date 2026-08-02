@@ -57,6 +57,12 @@ export function AdminRoute({ children }: AdminRouteProps): ReactElement {
   }
 
   if (!user?.roles.includes(APP_ROLES.Admin)) {
+    console.warn('[AdminRoute] Redirecting to /unauthorized', {
+      userRoles: user?.roles,
+      allowedRoles: [APP_ROLES.Admin],
+      isAuthenticated,
+      currentRoute: location.pathname
+    });
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }
 
@@ -76,6 +82,12 @@ export function LibrarianRoute({ children }: AdminRouteProps): ReactElement {
   }
 
   if (!user?.roles.includes(APP_ROLES.Librarian) && !user?.roles.includes(APP_ROLES.Admin)) {
+    console.warn('[LibrarianRoute] Redirecting to /unauthorized', {
+      userRoles: user?.roles,
+      allowedRoles: [APP_ROLES.Librarian, APP_ROLES.Admin],
+      isAuthenticated,
+      currentRoute: location.pathname
+    });
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }
 
@@ -95,6 +107,12 @@ export function MemberRoute({ children }: AdminRouteProps): ReactElement {
   }
 
   if (!user?.roles.includes(APP_ROLES.Member) && !user?.roles.includes(APP_ROLES.Admin)) {
+    console.warn('[MemberRoute] Redirecting to /unauthorized', {
+      userRoles: user?.roles,
+      allowedRoles: [APP_ROLES.Member, APP_ROLES.Admin],
+      isAuthenticated,
+      currentRoute: location.pathname
+    });
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }
 

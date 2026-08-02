@@ -43,7 +43,7 @@ import { UserRolesDialog } from '../components/UserRolesDialog';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function UsersPage(): React.ReactElement {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isAdmin } = useAuth();
   
   const [params, setParams] = useState<UserResourceParameters>({
     pageNumber: 1,
@@ -202,25 +202,25 @@ export default function UsersPage(): React.ReactElement {
                 <TableCell>Roles</TableCell>
                 <TableCell>Joined</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                {isAdmin && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={isAdmin ? 6 : 5} align="center" sx={{ py: 3 }}>
                     Loading users...
                   </TableCell>
                 </TableRow>
               ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }} color="error">
+                  <TableCell colSpan={isAdmin ? 6 : 5} align="center" sx={{ py: 3 }} color="error">
                     Error loading users: {error?.message}
                   </TableCell>
                 </TableRow>
               ) : !pagedUsers?.items.length ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={isAdmin ? 6 : 5} align="center" sx={{ py: 3 }}>
                     No users found.
                   </TableCell>
                 </TableRow>
@@ -283,11 +283,13 @@ export default function UsersPage(): React.ReactElement {
                           )}
                         </Box>
                       </TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={(e) => handleMenuOpen(e, user)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell>
+                      {isAdmin && (
+                        <TableCell align="right">
+                          <IconButton onClick={(e) => handleMenuOpen(e, user)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })

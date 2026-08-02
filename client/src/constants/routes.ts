@@ -44,6 +44,10 @@ export const ROUTES = {
   // Admin — Users
   USERS: '/app/users',
 
+  // Librarian — Members
+  MEMBERS: '/app/members',
+  MEMBER_DETAIL: (id: string | number) => `/app/members/${id}`,
+
   // Member
   MY_BORROWINGS: '/app/my-borrowings',
 

@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
 import { APP_ROLES } from '@/constants/roles';
-import { AdminRoute, ProtectedRoute, PublicRoute } from './guards';
+import { AdminRoute, ProtectedRoute, PublicRoute, LibrarianRoute } from './guards';
 
 // ─── Lazy-loaded pages ────────────────────────────────────────────────────────
 
@@ -43,6 +43,8 @@ const EditCategoryPage = lazy(() => import('@/features/categories/pages/EditCate
 const AllBorrowingsPage = lazy(() => import('@/features/borrowings/pages/AllBorrowingsPage'));
 const BorrowingDetailPage = lazy(() => import('@/features/borrowings/pages/BorrowingDetailPage'));
 const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'));
+const MembersPage = lazy(() => import('@/features/users/pages/MembersPage'));
+const MemberDetailPage = lazy(() => import('@/features/users/pages/MemberDetailPage'));
 
 // Authenticated (any role) pages
 const MyBorrowingsPage = lazy(() => import('@/features/borrowings/pages/MyBorrowingsPage'));
@@ -222,11 +224,11 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.DASHBOARD,
         element: (
-          <AdminRoute>
+          <LibrarianRoute>
             <Suspense fallback={<PageLoader />}>
               <DashboardPage />
             </Suspense>
-          </AdminRoute>
+          </LibrarianRoute>
         ),
       },
       {
@@ -242,31 +244,31 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.ADMIN_BOOKS,
         element: (
-          <AdminRoute>
+          <LibrarianRoute>
             <Suspense fallback={<PageLoader />}>
               <AdminBooksPage />
             </Suspense>
-          </AdminRoute>
+          </LibrarianRoute>
         ),
       },
       {
         path: ROUTES.ADMIN_BOOK_CREATE,
         element: (
-          <AdminRoute>
+          <LibrarianRoute>
             <Suspense fallback={<PageLoader />}>
               <CreateBookPage />
             </Suspense>
-          </AdminRoute>
+          </LibrarianRoute>
         ),
       },
       {
         path: '/app/books/:id/edit',
         element: (
-          <AdminRoute>
+          <LibrarianRoute>
             <Suspense fallback={<PageLoader />}>
               <EditBookPage />
             </Suspense>
-          </AdminRoute>
+          </LibrarianRoute>
         ),
       },
       {
@@ -352,21 +354,21 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.BORROWINGS,
         element: (
-          <AdminRoute>
+          <LibrarianRoute>
             <Suspense fallback={<PageLoader />}>
               <AllBorrowingsPage />
             </Suspense>
-          </AdminRoute>
+          </LibrarianRoute>
         ),
       },
       {
         path: '/app/borrowings/:id',
         element: (
-          <AdminRoute>
+          <LibrarianRoute>
             <Suspense fallback={<PageLoader />}>
               <BorrowingDetailPage />
             </Suspense>
-          </AdminRoute>
+          </LibrarianRoute>
         ),
       },
       {
@@ -377,6 +379,26 @@ export const router = createBrowserRouter([
               <UsersPage />
             </Suspense>
           </AdminRoute>
+        ),
+      },
+      {
+        path: ROUTES.MEMBERS,
+        element: (
+          <LibrarianRoute>
+            <Suspense fallback={<PageLoader />}>
+              <MembersPage />
+            </Suspense>
+          </LibrarianRoute>
+        ),
+      },
+      {
+        path: '/app/members/:id',
+        element: (
+          <LibrarianRoute>
+            <Suspense fallback={<PageLoader />}>
+              <MemberDetailPage />
+            </Suspense>
+          </LibrarianRoute>
         ),
       },
 
