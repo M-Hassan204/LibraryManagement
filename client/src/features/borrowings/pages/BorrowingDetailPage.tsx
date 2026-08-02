@@ -33,10 +33,13 @@ export default function BorrowingDetailPage(): React.ReactElement {
 
   const getStatusColor = (status: BorrowingStatus) => {
     switch (status) {
-      case BorrowingStatus.Active: return 'primary';
+      case BorrowingStatus.Pending: return 'warning';
+      case BorrowingStatus.Approved: return 'info';
+      case BorrowingStatus.Borrowed: return 'primary';
       case BorrowingStatus.Returned: return 'success';
       case BorrowingStatus.Overdue: return 'error';
-      case BorrowingStatus.Lost: return 'default';
+      case BorrowingStatus.Lost: return 'error';
+      case BorrowingStatus.Rejected: return 'error';
       default: return 'default';
     }
   };
@@ -111,14 +114,14 @@ export default function BorrowingDetailPage(): React.ReactElement {
             <Grid container spacing={3} sx={{ mt: 1 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary">Borrowed At</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {new Date(borrowing.borrowedAt).toLocaleString()}
+                <Typography variant="body1">
+                  {borrowing.borrowedAt ? new Date(borrowing.borrowedAt).toLocaleDateString() : '-'}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary">Due Date</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {new Date(borrowing.dueDate).toLocaleString()}
+                <Typography variant="body1" color={borrowing.dueDate && new Date(borrowing.dueDate) < new Date() && !borrowing.returnedAt ? 'error' : 'inherit'}>
+                  {borrowing.dueDate ? new Date(borrowing.dueDate).toLocaleDateString() : '-'}
                 </Typography>
               </Grid>
               {borrowing.returnedAt && (

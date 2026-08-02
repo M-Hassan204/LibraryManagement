@@ -67,16 +67,14 @@ export default function AllBorrowingsPage(): React.ReactElement {
 
   const getStatusColor = (status: BorrowingStatus) => {
     switch (status) {
-      case BorrowingStatus.Active:
-        return 'primary';
-      case BorrowingStatus.Returned:
-        return 'success';
-      case BorrowingStatus.Overdue:
-        return 'error';
-      case BorrowingStatus.Lost:
-        return 'default';
-      default:
-        return 'default';
+      case BorrowingStatus.Pending: return 'warning';
+      case BorrowingStatus.Approved: return 'info';
+      case BorrowingStatus.Borrowed: return 'primary';
+      case BorrowingStatus.Returned: return 'success';
+      case BorrowingStatus.Overdue: return 'error';
+      case BorrowingStatus.Lost: return 'error';
+      case BorrowingStatus.Rejected: return 'error';
+      default: return 'default';
     }
   };
 
@@ -93,8 +91,8 @@ export default function AllBorrowingsPage(): React.ReactElement {
     if (!pagedBorrowings?.items) return [];
     
     switch (currentTab) {
-      case 1: // Active
-        return pagedBorrowings.items.filter(b => b.status === BorrowingStatus.Active);
+      case 1: // Borrowed
+        return pagedBorrowings.items.filter(b => b.status === BorrowingStatus.Borrowed);
       case 2: // Overdue
         return pagedBorrowings.items.filter(b => b.status === BorrowingStatus.Overdue);
       case 3: // History
@@ -185,8 +183,8 @@ export default function AllBorrowingsPage(): React.ReactElement {
                   <TableRow key={borrowing.id} hover>
                     <TableCell sx={{ fontWeight: 500 }}>{borrowing.bookTitle}</TableCell>
                     <TableCell>{borrowing.userName || borrowing.userId}</TableCell>
-                    <TableCell>{new Date(borrowing.borrowedAt).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(borrowing.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{borrowing.borrowedAt ? new Date(borrowing.borrowedAt).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>{borrowing.dueDate ? new Date(borrowing.dueDate).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>
                       {borrowing.returnedAt ? new Date(borrowing.returnedAt).toLocaleDateString() : '-'}
                     </TableCell>

@@ -27,10 +27,10 @@ public class DashboardService : IDashboardService
         var totalUsers = await _userManager.Users.CountAsync();
         
         var activeBorrowings = await _unitOfWork.BorrowingRecords.Query()
-            .CountAsync(b => b.Status == BorrowingStatus.Active);
+            .CountAsync(b => b.Status == BorrowingStatus.Borrowed);
             
         var overdueBooks = await _unitOfWork.BorrowingRecords.Query()
-            .CountAsync(b => b.Status == BorrowingStatus.Active && b.DueDate < DateTime.UtcNow);
+            .CountAsync(b => b.Status == BorrowingStatus.Borrowed && b.DueDate < DateTime.UtcNow);
 
         var topBorrowedBooks = await _unitOfWork.BorrowingRecords.Query()
             .GroupBy(b => new { b.BookId, b.Book.Title, b.Book.Author.FirstName, b.Book.Author.LastName })

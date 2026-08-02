@@ -20,14 +20,14 @@ public class BorrowingRecord : BaseEntity
     public int BookId { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC date the book was borrowed.
+    /// Gets or sets the UTC date the book was borrowed. Null if not yet approved.
     /// </summary>
-    public DateTime BorrowedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? BorrowedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC date by which the book must be returned.
+    /// Gets or sets the UTC date by which the book must be returned. Null if not yet approved.
     /// </summary>
-    public DateTime DueDate { get; set; }
+    public DateTime? DueDate { get; set; }
 
     /// <summary>
     /// Gets or sets the UTC date the book was actually returned.
@@ -38,13 +38,18 @@ public class BorrowingRecord : BaseEntity
     /// <summary>
     /// Gets or sets the current lifecycle status of this borrowing record.
     /// </summary>
-    public BorrowingStatus Status { get; set; } = BorrowingStatus.Active;
+    public BorrowingStatus Status { get; set; } = BorrowingStatus.Pending;
 
     /// <summary>
     /// Gets or sets any notes added by an admin when processing the return
     /// (e.g., damage notes, fine reason).
     /// </summary>
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the reason for rejection, if the request was rejected.
+    /// </summary>
+    public string? RejectionReason { get; set; }
 
     // ----- Navigation Properties -----
 

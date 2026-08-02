@@ -45,7 +45,7 @@ public class BorrowingController : BaseApiController
         return Ok(response);
     }
 
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Librarian)]
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<BorrowingDto>>>> GetAllBorrowings([FromQuery] ResourceParameters parameters)
     {
@@ -57,6 +57,22 @@ public class BorrowingController : BaseApiController
     public async Task<ActionResult<ApiResponse<BorrowingDto>>> GetBorrowing(int id)
     {
         var response = await _borrowingService.GetBorrowingByIdAsync(id);
+        return Ok(response);
+    }
+
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Librarian)]
+    [HttpPost("{id}/approve")]
+    public async Task<ActionResult<ApiResponse<BorrowingDto>>> ApproveBorrowing(int id, [FromBody] ApproveBorrowRequestDto request)
+    {
+        var response = await _borrowingService.ApproveBorrowingAsync(id, request);
+        return Ok(response);
+    }
+
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Librarian)]
+    [HttpPost("{id}/reject")]
+    public async Task<ActionResult<ApiResponse<BorrowingDto>>> RejectBorrowing(int id, [FromBody] RejectBorrowRequestDto request)
+    {
+        var response = await _borrowingService.RejectBorrowingAsync(id, request);
         return Ok(response);
     }
 }

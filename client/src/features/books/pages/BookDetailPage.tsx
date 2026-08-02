@@ -13,6 +13,11 @@ import {
   Skeleton,
   Snackbar,
   Alert as MuiAlert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -23,9 +28,10 @@ import {
   ImportContacts as ReadIcon,
 } from '@mui/icons-material';
 import { useBook, useDeleteBook } from '../hooks/useBooks';
-import { useBorrowBook } from '../../borrowings/hooks/useBorrowings';
+import { useBorrowBook, useMyBorrowings } from '../../borrowings/hooks/useBorrowings';
 import { useReadBook } from '../../public/hooks/useReading';
 import { BookStatus } from '@/types/book.types';
+import { BorrowingStatus } from '@/types/borrowing.types';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -43,7 +49,12 @@ export default function BookDetailPage(): React.ReactElement {
   const borrowMutation = useBorrowBook();
   const readMutation = useReadBook();
   
+  const { data: myBorrowings } = useMyBorrowings();
+  const hasPendingRequest = myBorrowings?.some(b => b.bookId === bookId && b.status === BorrowingStatus.Pending);
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [borrowDialogOpen, setBorrowDialogOpen] = useState(false);
+  const [borrowNotes, setBorrowNotes] = useState('');
   const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
   const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
@@ -62,10 +73,18 @@ export default function BookDetailPage(): React.ReactElement {
 
   const handleBorrow = async () => {
     try {
-      await borrowMutation.mutateAsync({ bookId, homeDelivery: false });
-      setSnackbar({ open: true, message: 'Book borrowed successfully', severity: 'success' });
+      await borrowMutation.mutateAsync({ 
+        bookId, 
+        homeDelivery: false,
+        latitude: 0,
+        longitude: 0,
+        notes: borrowNotes
+      });
+      setSnackbar({ open: true, message: 'Borrow request submitted successfully. Waiting for librarian approval.', severity: 'success' });
+      setBorrowDialogOpen(false);
+      setBorrowNotes('');
     } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || 'Failed to borrow book', severity: 'error' });
+      setSnackbar({ open: true, message: err.message || 'Failed to request book', severity: 'error' });
     }
   };
 
@@ -188,10 +207,10 @@ export default function BookDetailPage(): React.ReactElement {
                 color="primary" 
                 fullWidth
                 startIcon={<BorrowIcon />}
-                disabled={book.status !== BookStatus.Available || borrowMutation.isPending}
-                onClick={handleBorrow}
+                disabled={book.status !== BookStatus.Available || borrowMutation.isPending || hasPendingRequest}
+                onClick={() => setBorrowDialogOpen(true)}
               >
-                {borrowMutation.isPending ? 'Borrowing...' : 'Borrow Book'}
+                {borrowMutation.isPending ? 'Requesting...' : hasPendingRequest ? 'Pending Approval' : 'Borrow Book'}
               </Button>
               <Button 
                 variant="outlined" 
@@ -292,6 +311,70 @@ export default function BookDetailPage(): React.ReactElement {
           </Grid>
         </Grid>
       </Card>
+
+      <Dialog open={borrowDialogOpen} onClose={() => setBorrowDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Borrow Book</DialogTitle>
+        <DialogContent dividers>
+          {book && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                 {book.coverImageUrl ? (
+                    <Box
+                      component="img"
+                      src={getImageUrl(book.coverImageUrl)}
+                      alt={book.title}
+                      sx={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 1, boxShadow: 1 }}
+                    />
+                  ) : (
+                    <Box sx={{ width: 80, height: 120, bgcolor: 'grey.200', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography variant="caption" color="text.secondary">No Cover</Typography>
+                    </Box>
+                  )}
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{book.title}</Typography>
+                    <Typography variant="body2" color="text.secondary">by {book.authorName || book.author?.name}</Typography>
+                    <Chip
+                      label={getStatusLabel(book.status)}
+                      color={getStatusColor(book.status) as any}
+                      size="small"
+                      sx={{ mt: 1, fontWeight: 'bold' }}
+                    />
+                  </Box>
+              </Box>
+
+              <Box sx={{ bgcolor: 'background.default', p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>Library Policy</Typography>
+                <Typography variant="body2" component="ul" sx={{ m: 0, pl: 2, color: 'text.secondary' }}>
+                  <li>Maximum borrowing period is determined by the librarian.</li>
+                  <li>Pickup date will be assigned after approval.</li>
+                  <li>Return date will be assigned after approval.</li>
+                </Typography>
+              </Box>
+
+              <TextField
+                label="Additional Notes (optional)"
+                multiline
+                rows={3}
+                fullWidth
+                variant="outlined"
+                value={borrowNotes}
+                onChange={(e) => setBorrowNotes(e.target.value)}
+                placeholder="E.g., I would like to pick this up on Friday morning if possible."
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setBorrowDialogOpen(false)} color="inherit">Cancel</Button>
+          <Button 
+            onClick={handleBorrow} 
+            variant="contained" 
+            disabled={borrowMutation.isPending}
+          >
+            {borrowMutation.isPending ? 'Submitting...' : 'Submit Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}

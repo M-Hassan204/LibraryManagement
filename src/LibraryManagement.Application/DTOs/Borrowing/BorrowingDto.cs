@@ -9,11 +9,12 @@ public class BorrowingDto
     public int BookId { get; set; }
     public string BookTitle { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
-    public DateTime BorrowedAt { get; set; }
-    public DateTime DueDate { get; set; }
+    public DateTime? BorrowedAt { get; set; }
+    public DateTime? DueDate { get; set; }
     public DateTime? ReturnedAt { get; set; }
     public BorrowingStatus Status { get; set; }
     public string? Notes { get; set; }
+    public string? RejectionReason { get; set; }
     
     // For Free users
     public LibraryManagement.Application.DTOs.Branch.NearestBranchDto? NearestBranch { get; set; }

@@ -10,4 +10,6 @@ public class BorrowBookRequestDto
 
     // For delivery requests for Premium users
     public string? DeliveryAddress { get; set; }
+
+    public string? Notes { get; set; }
 }

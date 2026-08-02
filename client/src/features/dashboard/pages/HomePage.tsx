@@ -48,7 +48,7 @@ export default function HomePage(): React.ReactElement {
   const { data: subscription, isLoading: subscriptionLoading } = useMySubscription();
 
   const activeBorrowings = borrowings?.filter(b => !b.returnedAt) || [];
-  const overdueBorrowings = activeBorrowings.filter(b => new Date(b.dueDate) < new Date());
+  const overdueBorrowings = activeBorrowings.filter(b => b.dueDate && new Date(b.dueDate) < new Date());
 
   const getPlanName = (plan?: SubscriptionPlan) => {
     switch (plan) {

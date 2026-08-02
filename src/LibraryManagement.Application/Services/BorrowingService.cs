@@ -60,9 +60,9 @@ public class BorrowingService : IBorrowingService
                 throw new BusinessRuleException("You must have an active Free or Premium subscription to borrow books.");
             }
 
-            var activeBorrowings = await _unitOfWork.BorrowingRecords.FindAsync(b => b.UserId == userId && b.Status == BorrowingStatus.Active);
+            var activeBorrowings = await _unitOfWork.BorrowingRecords.FindAsync(b => b.UserId == userId && (b.Status == BorrowingStatus.Borrowed || b.Status == BorrowingStatus.Pending));
             if (activeBorrowings.Any(b => b.BookId == request.BookId))
-                throw new BusinessRuleException("You already have an active borrowing for this book.");
+                throw new BusinessRuleException("You already have a pending or active borrowing for this book.");
 
             if (plan == SubscriptionPlanType.Premium)
             {
@@ -90,30 +90,30 @@ public class BorrowingService : IBorrowingService
                 var currentYear = DateTime.UtcNow.Year;
                 var borrowingsThisMonth = await _unitOfWork.BorrowingRecords.FindAsync(b => 
                     b.UserId == userId && 
-                    b.BorrowedAt.Month == currentMonth && 
-                    b.BorrowedAt.Year == currentYear);
+                    b.BorrowedAt.HasValue && b.BorrowedAt.Value.Month == currentMonth && 
+                    b.BorrowedAt.Value.Year == currentYear);
 
                 if (borrowingsThisMonth.Count() >= 5)
                     throw new BusinessRuleException("Free users can borrow a maximum of 5 books per month.");
 
-                if (request.Latitude == null || request.Longitude == null)
-                    throw new BusinessRuleException("Location (Latitude/Longitude) is required to find the nearest branch for pickup.");
-
-                var branches = await _unitOfWork.LibraryBranches.Query()
-                    .Where(b => b.IsActive)
-                    .ToListAsync();
-
-                if (!branches.Any())
-                    throw new BusinessRuleException("No active library branches found.");
-
-                nearestBranch = branches
-                    .Select(b => new { Branch = b, Distance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, b.Latitude, b.Longitude) })
-                    .OrderBy(b => b.Distance)
-                    .FirstOrDefault()?.Branch;
-
-                if (nearestBranch != null)
+                if (request.Latitude != null && request.Longitude != null)
                 {
-                    branchDistance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, nearestBranch.Latitude, nearestBranch.Longitude);
+                    var branches = await _unitOfWork.LibraryBranches.Query()
+                        .Where(b => b.IsActive)
+                        .ToListAsync();
+
+                    if (!branches.Any())
+                        throw new BusinessRuleException("No active library branches found.");
+
+                    nearestBranch = branches
+                        .Select(b => new { Branch = b, Distance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, b.Latitude, b.Longitude) })
+                        .OrderBy(b => b.Distance)
+                        .FirstOrDefault()?.Branch;
+
+                    if (nearestBranch != null)
+                    {
+                        branchDistance = GeoUtils.CalculateDistance(request.Latitude.Value, request.Longitude.Value, nearestBranch.Latitude, nearestBranch.Longitude);
+                    }
                 }
             }
         }
@@ -128,19 +128,13 @@ public class BorrowingService : IBorrowingService
         {
             UserId = userId,
             BookId = request.BookId,
-            BorrowedAt = DateTime.UtcNow,
-            DueDate = DateTime.UtcNow.AddDays(dueDays),
-            Status = BorrowingStatus.Active
+            BorrowedAt = null,
+            DueDate = null,
+            Status = BorrowingStatus.Pending,
+            Notes = request.Notes
         };
 
-        book.AvailableCopies -= 1;
-        if (book.AvailableCopies == 0)
-        {
-            book.Status = BookStatus.Borrowed;
-        }
-
         await _unitOfWork.BorrowingRecords.AddAsync(borrowing);
-        _unitOfWork.Books.Update(book);
         
         if (deliveryRequest != null)
         {
@@ -203,7 +197,107 @@ public class BorrowingService : IBorrowingService
             };
         }
 
-        return ApiResponse<BorrowingDto>.SuccessResponse(dto, "Book borrowed successfully.");
+        return ApiResponse<BorrowingDto>.SuccessResponse(dto, "Borrowing request submitted successfully. Please wait for librarian approval.");
+    }
+
+    public async Task<ApiResponse<BorrowingDto>> ApproveBorrowingAsync(int id, ApproveBorrowRequestDto request)
+    {
+        var borrowing = await _unitOfWork.BorrowingRecords.Query()
+            .Include(b => b.Book)
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (borrowing == null)
+            throw new NotFoundException("Borrowing request not found.");
+
+        if (borrowing.Status != BorrowingStatus.Pending)
+            throw new BusinessRuleException("Only pending requests can be approved.");
+
+        var book = borrowing.Book;
+        if (book.AvailableCopies <= 0)
+            throw new BusinessRuleException("No copies available to fulfill this request.");
+
+        if (request.DueDate <= request.BorrowDate)
+            throw new BusinessRuleException("Due date must be after the borrow date.");
+
+        borrowing.Status = BorrowingStatus.Borrowed;
+        borrowing.BorrowedAt = request.BorrowDate;
+        borrowing.DueDate = request.DueDate;
+
+        book.AvailableCopies -= 1;
+        if (book.AvailableCopies == 0)
+        {
+            book.Status = BookStatus.Borrowed;
+        }
+
+        _unitOfWork.BorrowingRecords.Update(borrowing);
+        _unitOfWork.Books.Update(book);
+
+        var deliveryRequest = await _unitOfWork.DeliveryRequests.Query().FirstOrDefaultAsync(d => d.BorrowingRecordId == id);
+        if (deliveryRequest != null)
+        {
+             deliveryRequest.Status = DeliveryStatus.Preparing;
+             _unitOfWork.DeliveryRequests.Update(deliveryRequest);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        var dto = new BorrowingDto
+        {
+            Id = borrowing.Id,
+            UserId = borrowing.UserId,
+            UserName = borrowing.User != null ? borrowing.User.FirstName + " " + borrowing.User.LastName : string.Empty,
+            BookId = borrowing.BookId,
+            BookTitle = book.Title,
+            BorrowedAt = borrowing.BorrowedAt,
+            DueDate = borrowing.DueDate,
+            Status = borrowing.Status
+        };
+
+        return ApiResponse<BorrowingDto>.SuccessResponse(dto, "Borrowing request approved successfully.");
+    }
+
+    public async Task<ApiResponse<BorrowingDto>> RejectBorrowingAsync(int id, RejectBorrowRequestDto request)
+    {
+        var borrowing = await _unitOfWork.BorrowingRecords.Query()
+            .Include(b => b.Book)
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (borrowing == null)
+            throw new NotFoundException("Borrowing request not found.");
+
+        if (borrowing.Status != BorrowingStatus.Pending)
+            throw new BusinessRuleException("Only pending requests can be rejected.");
+
+        borrowing.Status = BorrowingStatus.Rejected;
+        borrowing.RejectionReason = request.Reason;
+
+        _unitOfWork.BorrowingRecords.Update(borrowing);
+
+        var deliveryRequest = await _unitOfWork.DeliveryRequests.Query().FirstOrDefaultAsync(d => d.BorrowingRecordId == id);
+        if (deliveryRequest != null)
+        {
+             deliveryRequest.Status = DeliveryStatus.Cancelled;
+             _unitOfWork.DeliveryRequests.Update(deliveryRequest);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        var dto = new BorrowingDto
+        {
+            Id = borrowing.Id,
+            UserId = borrowing.UserId,
+            UserName = borrowing.User != null ? borrowing.User.FirstName + " " + borrowing.User.LastName : string.Empty,
+            BookId = borrowing.BookId,
+            BookTitle = borrowing.Book.Title,
+            BorrowedAt = borrowing.BorrowedAt,
+            DueDate = borrowing.DueDate,
+            Status = borrowing.Status,
+            RejectionReason = borrowing.RejectionReason
+        };
+
+        return ApiResponse<BorrowingDto>.SuccessResponse(dto, "Borrowing request rejected.");
     }
 
     public async Task<ApiResponse<BorrowingDto>> ReturnBookAsync(int borrowingId, ReturnBookRequestDto request)

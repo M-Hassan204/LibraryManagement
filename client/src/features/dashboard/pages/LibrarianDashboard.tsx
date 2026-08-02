@@ -18,7 +18,11 @@ import {
   TableRow,
   Paper,
   Chip,
-  Button
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -33,12 +37,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { usePendingDeliveries } from '../hooks/useDeliveries';
-import { useAllBorrowings } from '@/features/borrowings/hooks/useBorrowings';
+import { useAllBorrowings, useApproveBorrowing, useRejectBorrowing } from '@/features/borrowings/hooks/useBorrowings';
 import { useAdminUsers } from '@/features/users/hooks/useAdminUsers';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
 import { StatCard } from '../components/StatCard';
 import { DeliveryStatus } from '@/types/delivery.types';
+import { BorrowingStatus } from '@/types/borrowing.types';
 
 const formatDate = (dateString: Date | string) => {
   return new Intl.DateTimeFormat('en-US', {
@@ -66,13 +71,28 @@ export function LibrarianDashboard(): React.ReactElement {
   const { data: deliveriesData, isLoading: isLoadingDeliveries } = usePendingDeliveries();
   const { data: borrowingsData, isLoading: isLoadingBorrowings } = useAllBorrowings({ pageSize: 50 });
   const { data: membersData, isLoading: isLoadingMembers } = useAdminUsers({ pageSize: 5 });
+  
+  const approveMutation = useApproveBorrowing();
+  const rejectMutation = useRejectBorrowing();
+
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [borrowDate, setBorrowDate] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [approveError, setApproveError] = useState('');
 
   const today = new Date();
   
   const pendingDeliveriesCount = deliveriesData?.length || 0;
   
   const allBorrowings = borrowingsData?.items || [];
-  const recentBorrowings = allBorrowings.slice(0, 5);
+  
+  const pendingRequests = allBorrowings.filter(b => b.status === BorrowingStatus.Pending);
+  const recentBorrowings = allBorrowings.filter(b => b.status !== BorrowingStatus.Pending).slice(0, 5);
   
   const booksDueToday = allBorrowings.filter(b => {
     if (!b.dueDate || b.returnedAt) return false;
@@ -92,6 +112,68 @@ export function LibrarianDashboard(): React.ReactElement {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     navigate(`${ROUTES.ADMIN_BOOKS}?search=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const openApproveDialog = (id: number) => {
+    setApprovingId(id);
+    const todayStr = today.toISOString().split('T')[0];
+    const defaultDueDate = new Date(today);
+    defaultDueDate.setDate(defaultDueDate.getDate() + 14);
+    
+    setBorrowDate(todayStr);
+    setDueDate(defaultDueDate.toISOString().split('T')[0]);
+    setApproveError('');
+    setApproveDialogOpen(true);
+  };
+
+  const closeApproveDialog = () => {
+    setApprovingId(null);
+    setApproveDialogOpen(false);
+    setApproveError('');
+  };
+
+  const handleApproveSubmit = async () => {
+    if (!approvingId || !borrowDate || !dueDate) return;
+    
+    if (new Date(dueDate) <= new Date(borrowDate)) {
+      setApproveError('Due date must be after borrow date.');
+      return;
+    }
+
+    try {
+      await approveMutation.mutateAsync({ 
+        id: approvingId, 
+        data: {
+          borrowDate: new Date(borrowDate).toISOString(),
+          dueDate: new Date(dueDate).toISOString()
+        }
+      });
+      closeApproveDialog();
+    } catch (err: any) {
+      setApproveError(err.message || 'Failed to approve request');
+    }
+  };
+
+  const openRejectDialog = (id: number) => {
+    setRejectingId(id);
+    setRejectReason('');
+    setRejectDialogOpen(true);
+  };
+
+  const closeRejectDialog = () => {
+    setRejectingId(null);
+    setRejectReason('');
+    setRejectDialogOpen(false);
+  };
+
+  const handleRejectSubmit = async () => {
+    if (!rejectingId || !rejectReason.trim()) return;
+    try {
+      await rejectMutation.mutateAsync({ id: rejectingId, data: { reason: rejectReason } });
+      closeRejectDialog();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const quickActions = [
@@ -224,6 +306,61 @@ export function LibrarianDashboard(): React.ReactElement {
 
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, lg: 8 }}>
+            
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+              Pending Borrow Requests
+            </Typography>
+            <TableContainer component={Paper} sx={{ mb: 4, borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: 'action.hover' }}>
+                  <TableRow>
+                    <TableCell>Member</TableCell>
+                    <TableCell>Book</TableCell>
+                    <TableCell>Notes</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {isLoadingBorrowings ? (
+                    <TableRow><TableCell colSpan={4} align="center">Loading...</TableCell></TableRow>
+                  ) : pendingRequests.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} align="center">No pending requests</TableCell></TableRow>
+                  ) : (
+                    pendingRequests.map((b) => (
+                      <TableRow key={b.id}>
+                        <TableCell>{b.userName}</TableCell>
+                        <TableCell>{b.bookTitle}</TableCell>
+                        <TableCell sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {b.notes || '-'}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button 
+                            size="small" 
+                            variant="contained" 
+                            color="success" 
+                            onClick={() => openApproveDialog(b.id)}
+                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                            sx={{ mr: 1 }}
+                          >
+                            Approve
+                          </Button>
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            color="error" 
+                            onClick={() => openRejectDialog(b.id)}
+                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                          >
+                            Reject
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
               Recent Borrowings
             </Typography>
@@ -248,7 +385,7 @@ export function LibrarianDashboard(): React.ReactElement {
                       <TableRow key={b.id}>
                         <TableCell>{b.userName}</TableCell>
                         <TableCell>{b.bookTitle}</TableCell>
-                        <TableCell>{formatShortDate(b.borrowedAt)}</TableCell>
+                        <TableCell>{b.borrowedAt ? formatShortDate(b.borrowedAt) : '-'}</TableCell>
                         <TableCell>{b.dueDate ? formatShortDate(b.dueDate) : '-'}</TableCell>
                         <TableCell>
                           <Chip 
@@ -358,6 +495,87 @@ export function LibrarianDashboard(): React.ReactElement {
           </Grid>
         </Grid>
       </Container>
+      
+      {/* Reject Request Dialog */}
+      <Dialog open={rejectDialogOpen} onClose={closeRejectDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Reject Borrowing Request</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Please provide a reason for rejecting this borrowing request.
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Rejection Reason"
+            type="text"
+            fullWidth
+            multiline
+            rows={3}
+            variant="outlined"
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeRejectDialog} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleRejectSubmit} 
+            color="error" 
+            variant="contained"
+            disabled={!rejectReason.trim() || rejectMutation.isPending}
+          >
+            {rejectMutation.isPending ? 'Rejecting...' : 'Reject Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Approve Request Dialog */}
+      <Dialog open={approveDialogOpen} onClose={closeApproveDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Approve Borrowing Request</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Please select the borrow date and the due date for this request.
+          </Typography>
+          {approveError && (
+             <Alert severity="error" sx={{ mb: 2 }}>{approveError}</Alert>
+          )}
+          <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column', mt: 1 }}>
+            <TextField
+              label="Borrow Date"
+              type="date"
+              fullWidth
+              variant="outlined"
+              value={borrowDate}
+              onChange={(e) => setBorrowDate(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              label="Due Date"
+              type="date"
+              fullWidth
+              variant="outlined"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeApproveDialog} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleApproveSubmit} 
+            color="success" 
+            variant="contained"
+            disabled={!borrowDate || !dueDate || approveMutation.isPending}
+          >
+            {approveMutation.isPending ? 'Approving...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

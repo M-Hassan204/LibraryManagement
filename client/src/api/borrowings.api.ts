@@ -4,6 +4,8 @@ import type {
   BorrowBookRequestDto,
   BorrowingDto,
   ReturnBookRequestDto,
+  RejectBorrowRequestDto,
+  ApproveBorrowRequestDto,
 } from '@/types/borrowing.types';
 
 export const borrowingsApi = {
@@ -39,6 +41,21 @@ export const borrowingsApi = {
   ): Promise<ApiResponse<BorrowingDto>> {
     return axiosInstance
       .post<ApiResponse<BorrowingDto>>(`/borrowing/${id}/return`, data)
+      .then((res) => res.data);
+  },
+
+  approveBorrowing(id: number, data: ApproveBorrowRequestDto): Promise<ApiResponse<BorrowingDto>> {
+    return axiosInstance
+      .post<ApiResponse<BorrowingDto>>(`/borrowing/${id}/approve`, data)
+      .then((res) => res.data);
+  },
+
+  rejectBorrowing(
+    id: number,
+    data: RejectBorrowRequestDto,
+  ): Promise<ApiResponse<BorrowingDto>> {
+    return axiosInstance
+      .post<ApiResponse<BorrowingDto>>(`/borrowing/${id}/reject`, data)
       .then((res) => res.data);
   },
 };

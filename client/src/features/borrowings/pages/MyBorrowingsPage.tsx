@@ -16,10 +16,13 @@ export default function MyBorrowingsPage(): React.ReactElement {
 
   const getStatusColor = (status: BorrowingStatus) => {
     switch (status) {
-      case BorrowingStatus.Active: return 'primary';
+      case BorrowingStatus.Pending: return 'warning';
+      case BorrowingStatus.Approved: return 'info';
+      case BorrowingStatus.Borrowed: return 'primary';
       case BorrowingStatus.Returned: return 'success';
       case BorrowingStatus.Overdue: return 'error';
       case BorrowingStatus.Lost: return 'error';
+      case BorrowingStatus.Rejected: return 'error';
       default: return 'default';
     }
   };
@@ -36,10 +39,10 @@ export default function MyBorrowingsPage(): React.ReactElement {
             <TableHead sx={{ bgcolor: 'grey.50' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>Book Title</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Borrowed Date</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Current Status</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Borrow Date</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Due Date</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Returned At</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Rejection Reason</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -64,15 +67,6 @@ export default function MyBorrowingsPage(): React.ReactElement {
                         {borrowing.bookTitle}
                       </Typography>
                     </TableCell>
-                    <TableCell>{new Date(borrowing.borrowedAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color={new Date(borrowing.dueDate) < new Date() && !borrowing.returnedAt ? 'error' : 'textPrimary'}>
-                        {new Date(borrowing.dueDate).toLocaleDateString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {borrowing.returnedAt ? new Date(borrowing.returnedAt).toLocaleDateString() : '-'}
-                    </TableCell>
                     <TableCell>
                       <Chip 
                         label={BorrowingStatus[borrowing.status]} 
@@ -81,8 +75,17 @@ export default function MyBorrowingsPage(): React.ReactElement {
                         sx={{ fontWeight: 'bold' }}
                       />
                     </TableCell>
+                    <TableCell>{borrowing.borrowedAt ? new Date(borrowing.borrowedAt).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color={borrowing.dueDate && new Date(borrowing.dueDate) < new Date() && !borrowing.returnedAt ? 'error' : 'textPrimary'}>
+                        {borrowing.dueDate ? new Date(borrowing.dueDate).toLocaleDateString() : '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {borrowing.rejectionReason || '-'}
+                    </TableCell>
                     <TableCell align="right">
-                      {borrowing.status !== BorrowingStatus.Returned && borrowing.status !== BorrowingStatus.Lost && (
+                      {borrowing.status === BorrowingStatus.Borrowed && (
                         <Button 
                           variant="outlined" 
                           size="small"

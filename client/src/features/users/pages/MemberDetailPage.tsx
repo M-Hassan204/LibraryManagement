@@ -40,7 +40,7 @@ export default function MemberDetailPage(): React.ReactElement {
 
   const { data: user, isLoading, isError, error } = useAdminUser(id || '');
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -82,7 +82,7 @@ export default function MemberDetailPage(): React.ReactElement {
       </Button>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ p: 3, textAlign: 'center', height: '100%' }}>
             <Avatar 
               src={user.profileImageUrl ? `${import.meta.env.VITE_API_URL}${user.profileImageUrl}` : undefined} 
@@ -112,7 +112,7 @@ export default function MemberDetailPage(): React.ReactElement {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Card sx={{ height: '100%' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
               <Tabs value={tabValue} onChange={handleTabChange} aria-label="member details tabs">

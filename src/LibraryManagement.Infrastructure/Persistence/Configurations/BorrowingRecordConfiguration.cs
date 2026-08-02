@@ -21,10 +21,10 @@ public class BorrowingRecordConfiguration : IEntityTypeConfiguration<BorrowingRe
             .HasMaxLength(450); // Identity PK size
 
         builder.Property(br => br.BorrowedAt)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(br => br.DueDate)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(br => br.Status)
             .IsRequired()
