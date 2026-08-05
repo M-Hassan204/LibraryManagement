@@ -26,6 +26,8 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<LibraryBranch>? _libraryBranches;
     private IGenericRepository<DeliveryRequest>? _deliveryRequests;
     private IGenericRepository<DailyReadingLimit>? _dailyReadingLimits;
+    private IGenericRepository<FavoriteBook>? _favoriteBooks;
+    private IGenericRepository<DailyRecommendation>? _dailyRecommendations;
 
     /// <summary>
     /// Initializes a new instance of <see cref="UnitOfWork"/>.
@@ -75,6 +77,12 @@ public class UnitOfWork : IUnitOfWork
         
     public IGenericRepository<DailyReadingLimit> DailyReadingLimits
         => _dailyReadingLimits ??= new GenericRepository<DailyReadingLimit>(_context);
+        
+    public IGenericRepository<FavoriteBook> FavoriteBooks
+        => _favoriteBooks ??= new GenericRepository<FavoriteBook>(_context);
+        
+    public IGenericRepository<DailyRecommendation> DailyRecommendations
+        => _dailyRecommendations ??= new GenericRepository<DailyRecommendation>(_context);
 
     /// <inheritdoc />
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

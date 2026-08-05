@@ -35,6 +35,9 @@ public interface IUnitOfWork : IAsyncDisposable
     IGenericRepository<DeliveryRequest> DeliveryRequests { get; }
     IGenericRepository<DailyReadingLimit> DailyReadingLimits { get; }
     
+    IGenericRepository<FavoriteBook> FavoriteBooks { get; }
+    IGenericRepository<DailyRecommendation> DailyRecommendations { get; }
+    
     /// <summary>
     /// Commits all pending changes tracked by this unit of work to the database.
     /// </summary>

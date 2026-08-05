@@ -52,6 +52,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     /// <summary>Gets or sets the DailyReadingLimits table.</summary>
     public DbSet<DailyReadingLimit> DailyReadingLimits { get; set; }
 
+    /// <summary>Gets or sets the FavoriteBooks table.</summary>
+    public DbSet<FavoriteBook> FavoriteBooks { get; set; }
+
+    /// <summary>Gets or sets the DailyRecommendations table.</summary>
+    public DbSet<DailyRecommendation> DailyRecommendations { get; set; }
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -79,5 +85,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<LibraryBranch>().HasQueryFilter(lb => !lb.IsDeleted);
         builder.Entity<DeliveryRequest>().HasQueryFilter(dr => !dr.IsDeleted);
         builder.Entity<DailyReadingLimit>().HasQueryFilter(dl => !dl.IsDeleted);
+        builder.Entity<FavoriteBook>().HasQueryFilter(fb => !fb.IsDeleted);
+        builder.Entity<DailyRecommendation>().HasQueryFilter(dr => !dr.IsDeleted);
     }
 }

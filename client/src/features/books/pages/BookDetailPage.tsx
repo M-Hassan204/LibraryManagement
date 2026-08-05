@@ -26,8 +26,10 @@ import {
   MenuBook as BorrowIcon,
   KeyboardReturn as ReturnIcon,
   ImportContacts as ReadIcon,
+  Favorite as FavoriteIcon,
+  FavoriteBorder as FavoriteBorderIcon,
 } from '@mui/icons-material';
-import { useBook, useDeleteBook } from '../hooks/useBooks';
+import { useBook, useDeleteBook, useToggleFavorite, useFavorites } from '../hooks/useBooks';
 import { useBorrowBook, useMyBorrowings } from '../../borrowings/hooks/useBorrowings';
 import { useReadBook } from '../../public/hooks/useReading';
 import { BookStatus } from '@/types/book.types';
@@ -48,6 +50,10 @@ export default function BookDetailPage(): React.ReactElement {
   const deleteMutation = useDeleteBook();
   const borrowMutation = useBorrowBook();
   const readMutation = useReadBook();
+  
+  const { data: favorites } = useFavorites();
+  const toggleFavoriteMutation = useToggleFavorite();
+  const isFavorite = favorites?.some(f => f.id === bookId);
   
   const { data: myBorrowings } = useMyBorrowings();
   const hasPendingRequest = myBorrowings?.some(b => b.bookId === bookId && b.status === BorrowingStatus.Pending);
@@ -90,6 +96,15 @@ export default function BookDetailPage(): React.ReactElement {
 
   const handleReadOnline = () => {
     navigate(`/app/books/${bookId}/read`);
+  };
+
+  const handleToggleFavorite = async () => {
+    try {
+      await toggleFavoriteMutation.mutateAsync(bookId);
+      setSnackbar({ open: true, message: isFavorite ? 'Removed from favorites' : 'Added to favorites', severity: 'success' });
+    } catch (err: any) {
+      setSnackbar({ open: true, message: err.message || 'Failed to update favorites', severity: 'error' });
+    }
   };
 
   const getStatusColor = (status: BookStatus) => {
@@ -235,6 +250,17 @@ export default function BookDetailPage(): React.ReactElement {
                   </Button>
                 </span>
               </Tooltip>
+              <Button 
+                variant={isFavorite ? "contained" : "outlined"} 
+                color="secondary" 
+                fullWidth
+                startIcon={isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                disabled={toggleFavoriteMutation.isPending}
+                onClick={handleToggleFavorite}
+                sx={{ mt: 1 }}
+              >
+                {isFavorite ? 'Favorited' : 'Add to Favorites'}
+              </Button>
               {isAdmin && (
                 <>
                   <Divider sx={{ my: 1 }} />

@@ -6,4 +6,8 @@ namespace LibraryManagement.API.Controllers;
 [ApiController]
 public abstract class BaseApiController : ControllerBase
 {
+    protected string? GetUserId()
+    {
+        return User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
 }

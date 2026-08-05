@@ -39,6 +39,8 @@ public static class ApplicationServiceExtensions
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.ISubscriptionService, LibraryManagement.Application.Services.SubscriptionService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IReadingService, LibraryManagement.Application.Services.ReadingService>();
         services.AddScoped<LibraryManagement.Application.Interfaces.Services.IDeliveryService, LibraryManagement.Application.Services.DeliveryService>();
+        services.AddScoped<LibraryManagement.Application.Interfaces.Services.IFavoriteBookService, LibraryManagement.Application.Services.FavoriteBookService>();
+        services.AddScoped<LibraryManagement.Application.Interfaces.Services.IDailyRecommendationService, LibraryManagement.Application.Services.DailyRecommendationService>();
 
         // Register HttpClient for external API calls
         services.AddHttpClient();

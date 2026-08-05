@@ -61,4 +61,28 @@ export const booksApi = {
       .get<ApiResponse<BookMetadata[]>>('/book/search', { params })
       .then((res) => res.data);
   },
+
+  getDailyRecommendation(): Promise<ApiResponse<BookDto>> {
+    return axiosInstance
+      .get<ApiResponse<BookDto>>('/book/daily-recommendation')
+      .then((res) => res.data);
+  },
+
+  getFavorites(): Promise<ApiResponse<BookDto[]>> {
+    return axiosInstance
+      .get<ApiResponse<BookDto[]>>('/book/favorites')
+      .then((res) => res.data);
+  },
+
+  getRecommended(): Promise<ApiResponse<BookDto[]>> {
+    return axiosInstance
+      .get<ApiResponse<BookDto[]>>('/book/recommended')
+      .then((res) => res.data);
+  },
+
+  toggleFavorite(id: number): Promise<ApiResponse<boolean>> {
+    return axiosInstance
+      .post<ApiResponse<boolean>>(`/book/${id}/favorite`)
+      .then((res) => res.data);
+  },
 };

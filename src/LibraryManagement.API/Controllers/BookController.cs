@@ -11,11 +11,19 @@ public class BookController : BaseApiController
 {
     private readonly IBookService _bookService;
     private readonly IBookMetadataService _bookMetadataService;
+    private readonly IFavoriteBookService _favoriteBookService;
+    private readonly IDailyRecommendationService _dailyRecommendationService;
 
-    public BookController(IBookService bookService, IBookMetadataService bookMetadataService)
+    public BookController(
+        IBookService bookService, 
+        IBookMetadataService bookMetadataService,
+        IFavoriteBookService favoriteBookService,
+        IDailyRecommendationService dailyRecommendationService)
     {
         _bookService = bookService;
         _bookMetadataService = bookMetadataService;
+        _favoriteBookService = favoriteBookService;
+        _dailyRecommendationService = dailyRecommendationService;
     }
 
     [HttpGet]
@@ -116,6 +124,50 @@ public class BookController : BaseApiController
         }
 
         return Ok(await _bookMetadataService.SearchBooksAsync(query));
+    }
+
+    // ─── Daily Recommendation ──────────────────────────────────────
+
+    [HttpGet("daily-recommendation")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<BookDto>>> GetDailyRecommendation()
+    {
+        return Ok(await _dailyRecommendationService.GetTodayBookAsync());
+    }
+
+    // ─── Personalized Recommendations / Favorites ──────────────────
+
+    [Authorize]
+    [HttpPost("{id:int}/favorite")]
+    public async Task<ActionResult<ApiResponse<bool>>> ToggleFavorite(int id)
+    {
+        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(ApiResponse<bool>.FailureResponse("User ID not found."));
+
+        return Ok(await _favoriteBookService.ToggleFavoriteAsync(userId, id));
+    }
+
+    [Authorize]
+    [HttpGet("favorites")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<BookDto>>>> GetFavorites()
+    {
+        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(ApiResponse<IEnumerable<BookDto>>.FailureResponse("User ID not found."));
+
+        return Ok(await _favoriteBookService.GetUserFavoritesAsync(userId));
+    }
+
+    [Authorize]
+    [HttpGet("recommended")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<BookDto>>>> GetRecommended()
+    {
+        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(ApiResponse<IEnumerable<BookDto>>.FailureResponse("User ID not found."));
+
+        return Ok(await _favoriteBookService.GetPersonalizedRecommendationsAsync(userId));
     }
 }
 

@@ -6,6 +6,9 @@ import type { CreateBookRequestDto, UpdateBookRequestDto } from '@/types/book.ty
 export const BOOKS_QUERY_KEY = 'books';
 export const BOOK_QUERY_KEY = 'book';
 export const BOOK_METADATA_QUERY_KEY = 'book-metadata';
+export const DAILY_RECOMMENDATION_QUERY_KEY = 'daily-recommendation';
+export const FAVORITES_QUERY_KEY = 'favorites';
+export const RECOMMENDED_QUERY_KEY = 'recommended';
 
 export function useBooks(params: ResourceParameters) {
   return useQuery({
@@ -113,5 +116,64 @@ export function useBookMetadata(params: { isbn?: string; title?: string; author?
     enabled,
     retry: false, // Don't retry if not found
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+}
+
+export function useDailyRecommendation() {
+  return useQuery({
+    queryKey: [DAILY_RECOMMENDATION_QUERY_KEY],
+    queryFn: async () => {
+      const response = await booksApi.getDailyRecommendation();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch daily recommendation');
+      }
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 60 * 24, // Cache for 24 hours
+  });
+}
+
+export function useFavorites(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [FAVORITES_QUERY_KEY],
+    queryFn: async () => {
+      const response = await booksApi.getFavorites();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch favorites');
+      }
+      return response.data;
+    },
+    enabled,
+  });
+}
+
+export function useRecommended(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [RECOMMENDED_QUERY_KEY],
+    queryFn: async () => {
+      const response = await booksApi.getRecommended();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch recommended books');
+      }
+      return response.data;
+    },
+    enabled,
+  });
+}
+
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await booksApi.toggleFavorite(id);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to toggle favorite');
+      }
+      return response.data; // boolean
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [FAVORITES_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [RECOMMENDED_QUERY_KEY] });
+    },
   });
 }

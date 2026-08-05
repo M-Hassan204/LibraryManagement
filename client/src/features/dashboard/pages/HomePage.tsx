@@ -20,7 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/constants/routes';
-import { useBooks } from '../../books/hooks/useBooks';
+import { useBooks, useDailyRecommendation, useRecommended } from '../../books/hooks/useBooks';
 import { useMyBorrowings } from '@/features/borrowings/hooks/useBorrowings';
 import { useMySubscription } from '@/features/subscriptions/hooks/useSubscriptions';
 import { getImageUrl } from '@/utils/imageUrl';
@@ -44,6 +44,9 @@ export default function HomePage(): React.ReactElement {
     sortDescending: true,
   });
 
+  const { data: dailyRec, isLoading: dailyRecLoading } = useDailyRecommendation();
+  const { data: recommendedBooks } = useRecommended(!!user);
+
   const { data: borrowings, isLoading: borrowingsLoading } = useMyBorrowings();
   const { data: subscription, isLoading: subscriptionLoading } = useMySubscription();
 
@@ -66,6 +69,57 @@ export default function HomePage(): React.ReactElement {
       default: return 'info';
     }
   };
+
+  const renderBookCard = (book: any) => (
+    <Card 
+      sx={{ 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        borderRadius: 2,
+        transition: 'transform 0.2s',
+        '&:hover': { transform: 'scale(1.02)' }
+      }}
+    >
+      <CardActionArea 
+        onClick={() => navigate(`/books/${book.id}`)}
+        sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
+      >
+        {book.coverImageUrl ? (
+          <Box
+             component="img"
+             src={getImageUrl(book.coverImageUrl)}
+             alt={book.title}
+             sx={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover' }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: '100%',
+              aspectRatio: '2/3',
+              backgroundColor: 'grey.200',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'grey.500',
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+              No Cover
+            </Typography>
+          </Box>
+        )}
+        <CardContent sx={{ flexGrow: 1 }}>
+          <Typography variant="subtitle1" noWrap sx={{ fontWeight: 'bold' }}>
+            {book.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {book.authorName || book.author?.name}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
 
   return (
     <Box>
@@ -153,6 +207,59 @@ export default function HomePage(): React.ReactElement {
           </Box>
         )}
 
+        {/* Book of the Day */}
+        <Box sx={{ mb: 6 }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>
+            Book of the Day
+          </Typography>
+          {dailyRecLoading ? (
+            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+          ) : dailyRec ? (
+            <Card sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, borderRadius: 2 }}>
+              {dailyRec.coverImageUrl ? (
+                <Box
+                  component="img"
+                  src={getImageUrl(dailyRec.coverImageUrl)}
+                  alt={dailyRec.title}
+                  sx={{ width: { xs: '100%', sm: 200 }, height: { xs: 300, sm: 'auto' }, objectFit: 'cover' }}
+                />
+              ) : (
+                <Box sx={{ width: { xs: '100%', sm: 200 }, height: 300, bgcolor: 'grey.200', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>No Cover</Typography>
+                </Box>
+              )}
+              <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 4 }}>
+                <Typography variant="h4" gutterBottom>{dailyRec.title}</Typography>
+                <Typography variant="h6" color="text.secondary" gutterBottom>By {dailyRec.authorName}</Typography>
+                {dailyRec.description && (
+                  <Typography variant="body1" sx={{ mb: 3, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {dailyRec.description}
+                  </Typography>
+                )}
+                <Button variant="contained" onClick={() => navigate(`/books/${dailyRec.id}`)} sx={{ alignSelf: 'flex-start' }}>View Details</Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Typography variant="body1" color="text.secondary">No recommendation for today.</Typography>
+          )}
+        </Box>
+
+        {/* Recommended For You */}
+        {user && recommendedBooks && recommendedBooks.length > 0 && (
+          <Box sx={{ mb: 6 }}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>
+              Recommended For You
+            </Typography>
+            <Grid container spacing={4}>
+              {recommendedBooks.map((book) => (
+                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={book.id}>
+                  {renderBookCard(book)}
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
+
         {/* Latest Books */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
@@ -175,54 +282,7 @@ export default function HomePage(): React.ReactElement {
           ) : (
             latestBooks?.items.map((book) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={book.id}>
-                <Card 
-                  sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    borderRadius: 2,
-                    transition: 'transform 0.2s',
-                    '&:hover': { transform: 'scale(1.02)' }
-                  }}
-                >
-                  <CardActionArea 
-                    onClick={() => navigate(`/books/${book.id}`)}
-                    sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
-                  >
-                    {book.coverImageUrl ? (
-                      <Box
-                         component="img"
-                         src={getImageUrl(book.coverImageUrl)}
-                         alt={book.title}
-                         sx={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: '100%',
-                          aspectRatio: '2/3',
-                          backgroundColor: 'grey.200',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'grey.500',
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          No Cover
-                        </Typography>
-                      </Box>
-                    )}
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography variant="subtitle1" noWrap sx={{ fontWeight: 'bold' }}>
-                        {book.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {book.authorName || book.author?.name}
-                      </Typography>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
+                {renderBookCard(book)}
               </Grid>
             ))
           )}

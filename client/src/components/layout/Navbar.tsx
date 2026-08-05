@@ -20,7 +20,6 @@ import {
   ListItemIcon,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import HomeIcon from '@mui/icons-material/Home';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import InfoIcon from '@mui/icons-material/Info';
@@ -148,7 +147,7 @@ export default function Navbar() {
   const drawerContent = (
     <Box sx={{ width: 280, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-        <LocalLibraryIcon color="primary" />
+        <Box component="img" src="/logo.svg" alt="Logo" sx={{ height: 64 }} />
         <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>Library System</Typography>
       </Box>
       <Box sx={{ flexGrow: 1, overflowY: 'auto', py: 1 }}>
@@ -216,7 +215,7 @@ export default function Navbar() {
           </Box>
 
           {/* Logo */}
-          <LocalLibraryIcon sx={{ display: { xs: 'none', lg: 'flex' }, mr: 1, color: 'primary.main' }} />
+          <Box component="img" src="/logo.svg" alt="Logo" sx={{ height: { xs: 56, lg: 72 }, mr: 1, display: { xs: 'none', lg: 'flex' } }} />
           <Typography
             variant="h6"
             noWrap
@@ -236,7 +235,7 @@ export default function Navbar() {
 
           {/* Mobile Logo */}
           <Box sx={{ display: { xs: 'flex', lg: 'none' }, flexGrow: 1, alignItems: 'center', justifyContent: 'center', ml: isAuthenticated ? 4 : 0 }}>
-            <LocalLibraryIcon sx={{ mr: 1, color: 'primary.main' }} />
+            <Box component="img" src="/logo.svg" alt="Logo" sx={{ height: 56, mr: 1 }} />
             <Typography
               variant="h6"
               noWrap
