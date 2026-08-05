@@ -300,7 +300,7 @@ public class BorrowingService : IBorrowingService
         return ApiResponse<BorrowingDto>.SuccessResponse(dto, "Borrowing request rejected.");
     }
 
-    public async Task<ApiResponse<BorrowingDto>> ReturnBookAsync(int borrowingId, ReturnBookRequestDto request)
+    public async Task<ApiResponse<BorrowingDto>> ReturnBookAsync(int borrowingId, ReturnBookRequestDto request, string userId, bool isAdminOrLibrarian)
     {
         var borrowing = await _unitOfWork.BorrowingRecords.Query()
             .Include(b => b.Book)
@@ -309,6 +309,9 @@ public class BorrowingService : IBorrowingService
 
         if (borrowing == null)
             throw new NotFoundException("Borrowing record not found.");
+
+        if (borrowing.UserId != userId && !isAdminOrLibrarian)
+            throw new UnauthorizedAccessException("You are not authorized to return this book.");
 
         if (borrowing.Status == BorrowingStatus.Returned)
             throw new BusinessRuleException("This book has already been returned.");

@@ -47,6 +47,7 @@ const MembersPage = lazy(() => import('@/features/users/pages/MembersPage'));
 const MemberDetailPage = lazy(() => import('@/features/users/pages/MemberDetailPage'));
 
 // Authenticated (any role) pages
+const FavoritesPage = lazy(() => import('@/features/favorites/pages/FavoritesPage'));
 const MyBorrowingsPage = lazy(() => import('@/features/borrowings/pages/MyBorrowingsPage'));
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'));
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
@@ -179,6 +180,16 @@ export const router = createBrowserRouter([
       },
 
       // ── Authenticated Routes (Accessible to Any Role) ───────────────────────
+      {
+        path: ROUTES.FAVORITES,
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoader />}>
+              <FavoritesPage />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
       {
         path: '/app/books/:id/read',
         element: (

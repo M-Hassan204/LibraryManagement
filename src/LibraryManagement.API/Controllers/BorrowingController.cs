@@ -31,7 +31,11 @@ public class BorrowingController : BaseApiController
     [HttpPost("{id}/return")]
     public async Task<ActionResult<ApiResponse<BorrowingDto>>> ReturnBook(int id, [FromBody] ReturnBookRequestDto request)
     {
-        var response = await _borrowingService.ReturnBookAsync(id, request);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var isAdminOrLibrarian = User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Librarian);
+        var response = await _borrowingService.ReturnBookAsync(id, request, userId, isAdminOrLibrarian);
         return Ok(response);
     }
 

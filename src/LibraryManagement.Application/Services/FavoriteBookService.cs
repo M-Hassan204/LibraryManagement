@@ -46,6 +46,42 @@ public class FavoriteBookService : IFavoriteBookService
         return ApiResponse<bool>.SuccessResponse(isFavorite, isFavorite ? "Book added to favorites." : "Book removed from favorites.");
     }
 
+    public async Task<ApiResponse<bool>> AddFavoriteAsync(string userId, int bookId)
+    {
+        var book = await _unitOfWork.Books.GetByIdAsync(bookId);
+        if (book == null)
+            throw new NotFoundException("Book not found.");
+
+        var existingFavorite = await _unitOfWork.FavoriteBooks.Query()
+            .FirstOrDefaultAsync(fb => fb.UserId == userId && fb.BookId == bookId);
+
+        if (existingFavorite != null)
+            return ApiResponse<bool>.FailureResponse("Book is already in favorites.");
+
+        await _unitOfWork.FavoriteBooks.AddAsync(new FavoriteBook
+        {
+            UserId = userId,
+            BookId = bookId
+        });
+
+        await _unitOfWork.SaveChangesAsync();
+        return ApiResponse<bool>.SuccessResponse(true, "Book added to favorites.");
+    }
+
+    public async Task<ApiResponse<bool>> RemoveFavoriteAsync(string userId, int bookId)
+    {
+        var existingFavorite = await _unitOfWork.FavoriteBooks.Query()
+            .FirstOrDefaultAsync(fb => fb.UserId == userId && fb.BookId == bookId);
+
+        if (existingFavorite == null)
+            return ApiResponse<bool>.FailureResponse("Book is not in favorites.");
+
+        _unitOfWork.FavoriteBooks.Delete(existingFavorite);
+        await _unitOfWork.SaveChangesAsync();
+        return ApiResponse<bool>.SuccessResponse(true, "Book removed from favorites.");
+    }
+
+
     public async Task<ApiResponse<IEnumerable<BookDto>>> GetUserFavoritesAsync(string userId)
     {
         var favorites = await _unitOfWork.FavoriteBooks.Query()
@@ -77,10 +113,16 @@ public class FavoriteBookService : IFavoriteBookService
 
         // Determine most liked category
         var mostLikedCategoryId = favoriteBooks
+            .Where(b => b.CategoryId != null)
             .GroupBy(b => b.CategoryId)
             .OrderByDescending(g => g.Count())
             .Select(g => g.Key)
             .FirstOrDefault();
+
+        if (mostLikedCategoryId == null)
+        {
+            return ApiResponse<IEnumerable<BookDto>>.SuccessResponse(new List<BookDto>(), "No category data available to base recommendations on.");
+        }
 
         var favoriteBookIds = favoriteBooks.Select(b => b.Id).ToHashSet();
 

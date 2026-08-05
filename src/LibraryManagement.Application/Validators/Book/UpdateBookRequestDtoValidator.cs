@@ -27,5 +27,15 @@ public class UpdateBookRequestDtoValidator : AbstractValidator<UpdateBookRequest
 
         RuleFor(x => x.AuthorId)
             .NotEmpty().WithMessage("Author ID is required.");
+
+        RuleFor(x => x.Language)
+            .NotEmpty().WithMessage("Language is required.")
+            .MaximumLength(50).WithMessage("Language cannot exceed 50 characters.");
+
+        RuleFor(x => x.Description)
+            .MaximumLength(2000).WithMessage("Description cannot exceed 2000 characters.");
+
+        RuleFor(x => x.Publisher)
+            .MaximumLength(200).WithMessage("Publisher cannot exceed 200 characters.");
     }
 }

@@ -53,6 +53,9 @@ export default function EditBookPage(): React.ReactElement {
         authorId: finalAuthorId,
         status: data.status,
         coverImageUrl: data.coverImageUrl,
+        publisher: data.publisher,
+        language: data.language,
+        pages: data.pages,
       });
 
       if (file) {

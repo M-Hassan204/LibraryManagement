@@ -161,13 +161,30 @@ export function useRecommended(enabled: boolean = true) {
   });
 }
 
-export function useToggleFavorite() {
+export function useAddFavorite() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await booksApi.toggleFavorite(id);
+      const response = await booksApi.addFavorite(id);
       if (!response.success) {
-        throw new Error(response.message || 'Failed to toggle favorite');
+        throw new Error(response.message || 'Failed to add favorite');
+      }
+      return response.data; // boolean
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [FAVORITES_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [RECOMMENDED_QUERY_KEY] });
+    },
+  });
+}
+
+export function useRemoveFavorite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await booksApi.removeFavorite(id);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to remove favorite');
       }
       return response.data; // boolean
     },

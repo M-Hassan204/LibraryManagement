@@ -26,6 +26,7 @@ import { useMySubscription } from '@/features/subscriptions/hooks/useSubscriptio
 import { getImageUrl } from '@/utils/imageUrl';
 import { SubscriptionPlan } from '@/types/subscription.types';
 import { StatCard } from '../components/StatCard';
+import { BookCard } from '@/components/common/BookCard';
 import { APP_ROLES } from '@/constants/roles';
 
 export default function HomePage(): React.ReactElement {
@@ -69,57 +70,6 @@ export default function HomePage(): React.ReactElement {
       default: return 'info';
     }
   };
-
-  const renderBookCard = (book: any) => (
-    <Card 
-      sx={{ 
-        height: '100%', 
-        display: 'flex', 
-        flexDirection: 'column',
-        borderRadius: 2,
-        transition: 'transform 0.2s',
-        '&:hover': { transform: 'scale(1.02)' }
-      }}
-    >
-      <CardActionArea 
-        onClick={() => navigate(`/books/${book.id}`)}
-        sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
-      >
-        {book.coverImageUrl ? (
-          <Box
-             component="img"
-             src={getImageUrl(book.coverImageUrl)}
-             alt={book.title}
-             sx={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover' }}
-          />
-        ) : (
-          <Box
-            sx={{
-              width: '100%',
-              aspectRatio: '2/3',
-              backgroundColor: 'grey.200',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'grey.500',
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-              No Cover
-            </Typography>
-          </Box>
-        )}
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Typography variant="subtitle1" noWrap sx={{ fontWeight: 'bold' }}>
-            {book.title}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" noWrap>
-            {book.authorName || book.author?.name}
-          </Typography>
-        </CardContent>
-      </CardActionArea>
-    </Card>
-  );
 
   return (
     <Box>
@@ -248,12 +198,12 @@ export default function HomePage(): React.ReactElement {
         {user && recommendedBooks && recommendedBooks.length > 0 && (
           <Box sx={{ mb: 6 }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>
-              Recommended For You
+              Recommended For You ❤️
             </Typography>
             <Grid container spacing={4}>
               {recommendedBooks.map((book) => (
                 <Grid size={{ xs: 12, sm: 6, md: 3 }} key={book.id}>
-                  {renderBookCard(book)}
+                  <BookCard book={book} />
                 </Grid>
               ))}
             </Grid>
@@ -282,7 +232,7 @@ export default function HomePage(): React.ReactElement {
           ) : (
             latestBooks?.items.map((book) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={book.id}>
-                {renderBookCard(book)}
+                <BookCard book={book} />
               </Grid>
             ))
           )}

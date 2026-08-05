@@ -20,6 +20,7 @@ export const ROUTES = {
   // App (authenticated)
   APP: '/app',
   DASHBOARD: '/app/dashboard',
+  FAVORITES: '/favorites',
 
   // Admin — Books
   ADMIN_BOOKS: '/app/books',

@@ -37,8 +37,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author != null ? src.Author.FullName : string.Empty))
             .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : string.Empty))
             .ReverseMap();
-        CreateMap<DTOs.Book.CreateBookRequestDto, Domain.Entities.Book>();
-        CreateMap<DTOs.Book.UpdateBookRequestDto, Domain.Entities.Book>();
+        CreateMap<DTOs.Book.CreateBookRequestDto, Domain.Entities.Book>()
+            .ForMember(dest => dest.PublicationYear, opt => opt.MapFrom(src => src.PublishedYear));
+        CreateMap<DTOs.Book.UpdateBookRequestDto, Domain.Entities.Book>()
+            .ForMember(dest => dest.PublicationYear, opt => opt.MapFrom(src => src.PublishedYear));
 
         // Admin User Mappings
         CreateMap<Domain.Entities.ApplicationUser, DTOs.Admin.Users.AdminUserDto>()

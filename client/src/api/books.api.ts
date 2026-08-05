@@ -70,7 +70,7 @@ export const booksApi = {
 
   getFavorites(): Promise<ApiResponse<BookDto[]>> {
     return axiosInstance
-      .get<ApiResponse<BookDto[]>>('/book/favorites')
+      .get<ApiResponse<BookDto[]>>('/favorites')
       .then((res) => res.data);
   },
 
@@ -80,9 +80,15 @@ export const booksApi = {
       .then((res) => res.data);
   },
 
-  toggleFavorite(id: number): Promise<ApiResponse<boolean>> {
+  addFavorite(id: number): Promise<ApiResponse<boolean>> {
     return axiosInstance
-      .post<ApiResponse<boolean>>(`/book/${id}/favorite`)
+      .post<ApiResponse<boolean>>(`/favorites/${id}`)
+      .then((res) => res.data);
+  },
+
+  removeFavorite(id: number): Promise<ApiResponse<boolean>> {
+    return axiosInstance
+      .delete<ApiResponse<boolean>>(`/favorites/${id}`)
       .then((res) => res.data);
   },
 };

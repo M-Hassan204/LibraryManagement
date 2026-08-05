@@ -8,7 +8,7 @@ public interface IBorrowingService
     Task<ApiResponse<BorrowingDto>> BorrowBookAsync(string userId, BorrowBookRequestDto request);
     Task<ApiResponse<BorrowingDto>> ApproveBorrowingAsync(int id, ApproveBorrowRequestDto request);
     Task<ApiResponse<BorrowingDto>> RejectBorrowingAsync(int id, RejectBorrowRequestDto request);
-    Task<ApiResponse<BorrowingDto>> ReturnBookAsync(int borrowingId, ReturnBookRequestDto request);
+    Task<ApiResponse<BorrowingDto>> ReturnBookAsync(int borrowingId, ReturnBookRequestDto request, string userId, bool isAdminOrLibrarian);
     Task<ApiResponse<IEnumerable<BorrowingDto>>> GetUserBorrowingsAsync(string userId);
     Task<ApiResponse<PagedResult<BorrowingDto>>> GetAllBorrowingsAsync(ResourceParameters parameters);
     Task<ApiResponse<BorrowingDto>> GetBorrowingByIdAsync(int id);

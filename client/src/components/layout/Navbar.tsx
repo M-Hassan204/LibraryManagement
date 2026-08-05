@@ -22,6 +22,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import InfoIcon from '@mui/icons-material/Info';
 import ContactSupportIcon from '@mui/icons-material/ContactSupport';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -81,6 +82,10 @@ export default function Navbar() {
     { name: 'Home', path: ROUTES.HOME, icon: <HomeIcon /> },
     { name: 'Books', path: ROUTES.BOOKS, icon: <AutoStoriesIcon /> },
   ];
+
+  if (isAuthenticated) {
+    baseLinks.push({ name: 'Favorites', path: ROUTES.FAVORITES, icon: <FavoriteIcon /> });
+  }
 
   if (isMember) {
     baseLinks.push({ name: 'My Borrowings', path: ROUTES.MY_BORROWINGS, icon: <AutorenewIcon /> });

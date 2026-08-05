@@ -135,29 +135,7 @@ public class BookController : BaseApiController
         return Ok(await _dailyRecommendationService.GetTodayBookAsync());
     }
 
-    // ─── Personalized Recommendations / Favorites ──────────────────
-
-    [Authorize]
-    [HttpPost("{id:int}/favorite")]
-    public async Task<ActionResult<ApiResponse<bool>>> ToggleFavorite(int id)
-    {
-        var userId = GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(ApiResponse<bool>.FailureResponse("User ID not found."));
-
-        return Ok(await _favoriteBookService.ToggleFavoriteAsync(userId, id));
-    }
-
-    [Authorize]
-    [HttpGet("favorites")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<BookDto>>>> GetFavorites()
-    {
-        var userId = GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(ApiResponse<IEnumerable<BookDto>>.FailureResponse("User ID not found."));
-
-        return Ok(await _favoriteBookService.GetUserFavoritesAsync(userId));
-    }
+    // ─── Personalized Recommendations ──────────────────
 
     [Authorize]
     [HttpGet("recommended")]

@@ -57,7 +57,7 @@ public class GlobalExceptionMiddleware
             await HandleExceptionAsync(
                 context,
                 HttpStatusCode.InternalServerError,
-                ["An unexpected error occurred. Please try again later."]);
+                [ex.Message, ex.InnerException?.Message ?? ""]);
         }
     }
 

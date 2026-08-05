@@ -46,6 +46,13 @@ export function useReturnBook() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ALL_BORROWINGS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MY_BORROWINGS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [BORROWING_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['book'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-recommendation'] });
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      queryClient.invalidateQueries({ queryKey: ['recommended'] });
     },
   });
 }

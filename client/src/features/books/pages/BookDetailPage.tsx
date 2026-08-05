@@ -29,8 +29,8 @@ import {
   Favorite as FavoriteIcon,
   FavoriteBorder as FavoriteBorderIcon,
 } from '@mui/icons-material';
-import { useBook, useDeleteBook, useToggleFavorite, useFavorites } from '../hooks/useBooks';
-import { useBorrowBook, useMyBorrowings } from '../../borrowings/hooks/useBorrowings';
+import { useBook, useDeleteBook, useAddFavorite, useRemoveFavorite, useFavorites } from '../hooks/useBooks';
+import { useBorrowBook, useMyBorrowings, useReturnBook } from '../../borrowings/hooks/useBorrowings';
 import { useReadBook } from '../../public/hooks/useReading';
 import { BookStatus } from '@/types/book.types';
 import { BorrowingStatus } from '@/types/borrowing.types';
@@ -49,14 +49,17 @@ export default function BookDetailPage(): React.ReactElement {
   
   const deleteMutation = useDeleteBook();
   const borrowMutation = useBorrowBook();
+  const returnMutation = useReturnBook();
   const readMutation = useReadBook();
   
   const { data: favorites } = useFavorites();
-  const toggleFavoriteMutation = useToggleFavorite();
+  const addFavoriteMutation = useAddFavorite();
+  const removeFavoriteMutation = useRemoveFavorite();
   const isFavorite = favorites?.some(f => f.id === bookId);
   
   const { data: myBorrowings } = useMyBorrowings();
   const hasPendingRequest = myBorrowings?.some(b => b.bookId === bookId && b.status === BorrowingStatus.Pending);
+  const activeBorrowing = myBorrowings?.find(b => b.bookId === bookId && b.status === BorrowingStatus.Borrowed && !b.returnedAt);
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [borrowDialogOpen, setBorrowDialogOpen] = useState(false);
@@ -98,9 +101,23 @@ export default function BookDetailPage(): React.ReactElement {
     navigate(`/app/books/${bookId}/read`);
   };
 
+  const handleReturn = async () => {
+    if (!activeBorrowing) return;
+    try {
+      await returnMutation.mutateAsync({ id: activeBorrowing.id, data: { notes: '' } });
+      setSnackbar({ open: true, message: 'Book returned successfully', severity: 'success' });
+    } catch (err: any) {
+      setSnackbar({ open: true, message: err.message || 'Failed to return book', severity: 'error' });
+    }
+  };
+
   const handleToggleFavorite = async () => {
     try {
-      await toggleFavoriteMutation.mutateAsync(bookId);
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync(bookId);
+      } else {
+        await addFavoriteMutation.mutateAsync(bookId);
+      }
       setSnackbar({ open: true, message: isFavorite ? 'Removed from favorites' : 'Added to favorites', severity: 'success' });
     } catch (err: any) {
       setSnackbar({ open: true, message: err.message || 'Failed to update favorites', severity: 'error' });
@@ -237,25 +254,38 @@ export default function BookDetailPage(): React.ReactElement {
               >
                 {readMutation.isPending ? 'Loading...' : 'Read Online'}
               </Button>
-              <Tooltip title="To return a book, please go to My Borrowings">
-                <span>
-                  <Button 
-                    variant="outlined" 
-                    color="secondary" 
-                    fullWidth
-                    startIcon={<ReturnIcon />}
-                    disabled
-                  >
-                    Return Book
-                  </Button>
-                </span>
-              </Tooltip>
+              {activeBorrowing ? (
+                <Button 
+                  variant="outlined" 
+                  color="secondary" 
+                  fullWidth
+                  startIcon={<ReturnIcon />}
+                  disabled={returnMutation.isPending}
+                  onClick={handleReturn}
+                >
+                  {returnMutation.isPending ? 'Returning...' : 'Return Book'}
+                </Button>
+              ) : (
+                <Tooltip title="You have not borrowed this book.">
+                  <span>
+                    <Button 
+                      variant="outlined" 
+                      color="secondary" 
+                      fullWidth
+                      startIcon={<ReturnIcon />}
+                      disabled
+                    >
+                      Return Book
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
               <Button 
                 variant={isFavorite ? "contained" : "outlined"} 
                 color="secondary" 
                 fullWidth
                 startIcon={isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                disabled={toggleFavoriteMutation.isPending}
+                disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
                 onClick={handleToggleFavorite}
                 sx={{ mt: 1 }}
               >

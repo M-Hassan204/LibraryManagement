@@ -9,6 +9,7 @@ import { useBooks } from '@/features/books/hooks/useBooks';
 import { useCategories } from '@/features/categories/hooks/useCategories';
 import { getImageUrl } from '@/utils/imageUrl';
 import { BookStatus } from '@/types/book.types';
+import { BookCard } from '@/components/common/BookCard';
 
 export default function BooksPublicPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -100,61 +101,7 @@ export default function BooksPublicPage(): React.ReactElement {
           <Grid container spacing={3}>
             {filteredBooks.map((book) => (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={book.id}>
-                <Card 
-                  elevation={2} 
-                  sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 6
-                    }
-                  }}
-                >
-                  <CardActionArea onClick={() => navigate(`/books/${book.id}`)} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-                    <Box sx={{ position: 'relative', pt: '120%', bgcolor: 'grey.100' }}>
-                      {book.coverImageUrl ? (
-                        <CardMedia
-                          component="img"
-                          image={getImageUrl(book.coverImageUrl)}
-                          alt={book.title}
-                          sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'grey.400' }}>
-                          <BookIcon sx={{ fontSize: 60 }} />
-                        </Box>
-                      )}
-                      <Chip 
-                        label={BookStatus[book.status]} 
-                        color={getStatusColor(book.status) as any}
-                        size="small"
-                        sx={{ position: 'absolute', top: 8, right: 8, fontWeight: 'bold' }}
-                      />
-                    </Box>
-                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="h6" component="h2" sx={{ 
-                        overflow: 'hidden', 
-                        textOverflow: 'ellipsis', 
-                        display: '-webkit-box', 
-                        WebkitLineClamp: 2, 
-                        WebkitBoxOrient: 'vertical',
-                        lineHeight: 1.2,
-                        mb: 1
-                      }}>
-                        {book.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1, mt: 'auto' }}>
-                        {book.authorName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {book.categoryName}
-                      </Typography>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
+                <BookCard book={book} />
               </Grid>
             ))}
           </Grid>
